@@ -106,15 +106,6 @@ class TracHoursPlugin(Component):
 
         results = get_all_dict(self.env, "select sum(seconds_worked) as t, ticket from ticket_time where ticket in (%s) group by ticket" % ",".join(map(str,ids)))
 
-        #If no work has been logged for a ticket id, nothing will be returned for that id, but we want it to return 0
-        for id in ids:
-            id_ismember = False
-            for result in results:
-                if id == result['ticket']:
-                    id_ismember = True
-            if not id_ismember:
-                results.append({'ticket':id, 't':0})
-
         update = "update ticket_custom set value=%s where name='totalhours' and ticket=%s"
         for result in results:
             formatted = "%8.2f" % (float(result['t']) / 3600.0)
@@ -469,16 +460,13 @@ class TracHoursPlugin(Component):
             if user: 
                 qstring = qstring.replace('$USER', user) 
             self.log.debug('QueryModule: Using default query: %s', str(qstring)) 
-
             constraints = Query.from_string(self.env, qstring).constraints 
             # Ensure no field constraints that depend on $USER are used 
-            # if we have no username.
-
-            for constraint_set in constraints:
-                for field, vals in constraint_set.items(): 
-                    for val in vals: 
-                        if val.endswith('$USER'): 
-                            del constraint_set[field] 
+            # if we have no username. 
+            for field, vals in constraints.items(): 
+                for val in vals: 
+                    if val.endswith('$USER'): 
+                        del constraints[field] 
 
         cols = req.args.get('col')
         if isinstance(cols, basestring):
@@ -617,7 +605,7 @@ class TracHoursPlugin(Component):
 
         # For clients without JavaScript, we add a new constraint here if
         # requested
-        constraints = ticket_data['clauses']
+        constraints = ticket_data['constraints']
         if 'add' in req.args:
             field = req.args.get('add_filter')
             if field:
@@ -716,10 +704,10 @@ class TracHoursPlugin(Component):
         data['row'] = ticket_data['row'] 
         if 'comments' in req.args.get('row', []):
             data['row'].append('comments')
-        data['constraints'] = ticket_data['clauses']
+        data['constraints'] = ticket_data['constraints']
 
         our_labels = dict([(f['name'], f['label']) for f in self.fields])
-        labels = TicketSystem(self.env).get_ticket_field_labels()
+        labels = ticket_data['labels']
         labels.update(our_labels)
         data['labels'] = labels
 
@@ -825,7 +813,7 @@ class TracHoursPlugin(Component):
             
 
         data['query'].num_items = num_items
-        data['labels'] = TicketSystem(self.env).get_ticket_field_labels()
+        data['labels'] = ticket_data['labels']
         data['labels'].update(labels)
         data['can_add_hours'] = req.perm.has_permission('TICKET_ADD_HOURS')
 
