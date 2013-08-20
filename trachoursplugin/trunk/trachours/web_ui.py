@@ -49,7 +49,8 @@ class TracHoursRoadmapFilter(Component):
         and milestones /milestone/<milestone>
         """
 
-        if filename in ('roadmap.html', 'milestone_view.html'):
+        if filename in ('roadmap.html', 'milestone_view.html') and \
+                'TICKET_VIEW_HOURS' in req.perm:
             trac_hours = TracHoursPlugin(self.env)
 
             hours = {}
@@ -191,12 +192,13 @@ class TracUserHours(Component):
 
     ### IRequestHandler methods
 
-    def match_request(self, req):
+    def match_request(self, req):req.perm.require('TICKET_VIEW_HOURS')
         """Return whether the handler wants to process the given request."""
         return req.path_info == '/hours/user' or \
                req.path_info.startswith('/hours/user/')
 
     def process_request(self, req):
+        req.perm.require('TICKET_VIEW_HOURS')
         if req.path_info.rstrip('/') == '/hours/user':
             return self.users(req)
         user = req.path_info.split('/hours/user/', 1)[-1]
