@@ -193,7 +193,6 @@ class TracUserHours(Component):
     ### IRequestHandler methods
 
     def match_request(self, req):
-        req.perm.require('TICKET_VIEW_HOURS')
         return req.path_info == '/hours/user' or \
                req.path_info.startswith('/hours/user/')
 
