@@ -200,7 +200,7 @@ class TracHoursPlugin(Component):
         permissions" that group several simple actions under one name for
         convenience.
         """
-        return ['TICKET_ADD_HOURS']
+        return ['TICKET_ADD_HOURS', 'TICKET_VIEW_HOURS']
 
     # IRequestHandler methods
 
@@ -234,6 +234,7 @@ class TracHoursPlugin(Component):
         Note that if template processing should not occur, this method can
         simply send the response itself and not return anything.
         """
+        req.perm.require('TICKET_VIEW_HOURS')
         path = req.path_info.rstrip('/')
 
         if path == '/hours':
@@ -260,8 +261,9 @@ class TracHoursPlugin(Component):
         """Should return an iterable object over the list of navigation items to
         add, each being a tuple in the form (category, name, text).
         """
-        yield ('mainnav', 'hours',
-               tag.a(_("Hours"), href=req.href.hours(), accesskey='H'))
+        if 'TICKET_VIEW_HOURS' in req.perm:
+            yield ('mainnav', 'hours',
+                   tag.a(_("Hours"), href=req.href.hours(), accesskey='H'))
 
 
     ### ITemplateProvider methods
@@ -330,7 +332,7 @@ class TracHoursPlugin(Component):
         correctly display on the ticket.html
         """
 
-        if filename == 'ticket.html':
+        if filename == 'ticket.html' and 'TICKET_VIEW_HOURS' in req.perm:
             totalhours = [ field for field in data['fields'] if field['name'] == 'totalhours' ][0]
             ticket_id = data['ticket'].id
             if ticket_id is None: # new ticket

@@ -124,6 +124,7 @@ class MultiprojectHours(Component):
         Note that if template processing should not occur, this method can
         simply send the response itself and not return anything.
         """
+        req.perm.require('TICKET_VIEW_HOURS')
         data = {}
         now = datetime.datetime.now()
 
