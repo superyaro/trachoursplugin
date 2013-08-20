@@ -192,8 +192,8 @@ class TracUserHours(Component):
 
     ### IRequestHandler methods
 
-    def match_request(self, req):req.perm.require('TICKET_VIEW_HOURS')
-        """Return whether the handler wants to process the given request."""
+    def match_request(self, req):
+        req.perm.require('TICKET_VIEW_HOURS')
         return req.path_info == '/hours/user' or \
                req.path_info.startswith('/hours/user/')
 
