@@ -10,6 +10,7 @@
 from genshi.builder import tag
 from genshi.filters import Transformer
 from genshi.filters.transform import StreamBuffer
+from trac import __version__ as TRAC_VERSION
 from trac.core import *
 from trac.ticket import Ticket
 from trac.ticket.model import Milestone
@@ -26,6 +27,7 @@ from tracsqlhelper import get_all_dict, get_column
 from utils import get_date, hours_format
 
 from StringIO import StringIO
+from pkg_resources import parse_version
 import calendar
 import csv
 import datetime
@@ -62,12 +64,12 @@ class TracHoursRoadmapFilter(Component):
                 # /milestone view : only one milestone
                 milestones = [data['milestone']]
                 this_milestone = milestones[0].name
-                find_xpath = "//div[@class='milestone']//h1"
-                xpath = "//div[@class='milestone']//div[@class='info']"
+                find_xpath = "//div[@class='milestone']/h1"
+                xpath = "//div[@class='milestone']/div[1]"
             else:
                 # /roadmap view
-                find_xpath = "//li[@class='milestone']//h2/a"
-                xpath = "//li[@class='milestone']//div[@class='info']"
+                find_xpath = "//*[@class='milestone']//h2/a"
+                xpath = "//*[@class='milestone']/div[1]"
 
             for milestone in milestones:
                 hours[milestone.name] = dict(totalhours=0., 
@@ -128,16 +130,23 @@ class TracHoursRoadmapFilter(Component):
                 return iter([])
             items = []
             if estimated_hours:
-                items.append(tag.dt("Estimated Hours:"))
-                items.append(tag.dd(str(estimated_hours)))
+                if parse_version(TRAC_VERSION) < parse_version('1.0'):
+                    items.append(tag.dt("Estimated Hours:"))
+                    items.append(tag.dd(str(estimated_hours)))
+                else:
+                    items.append(tag.span("Estimated Hours: ", str(estimated_hours), class_="first interval"))
             date = hours['date']
             link = self.href("hours", milestone=milestone, 
                              from_year=date.year,
                              from_month=date.month,
                              from_day=date.day)
-            items.append(tag.dt(tag.a("Total Hours:", href=link)))
-            items.append(tag.dd(tag.a(hours_format % total_hours, href=link)))
-            return iter(tag.dl(*items))
+            if parse_version(TRAC_VERSION) < parse_version('1.0'):
+                items.append(tag.dt(tag.a("Total Hours:", href=link)))
+                items.append(tag.dd(tag.a(hours_format % total_hours, href=link)))
+                return iter(tag.dl(*items))
+            else:
+                items.append(tag.span(tag.a("Total Hours: ", hours_format % total_hours, href=link), class_="interval"))
+                return iter(tag.p(*items, class_="legend"))
 
 
 class TracHoursSidebarProvider(Component):
