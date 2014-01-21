@@ -869,7 +869,7 @@ class TracHoursPlugin(Component):
         add_stylesheet(req, 'common/css/report.css')
         add_script(req, 'common/js/query.js')
         
-        return ('hours_timeline.html', data, 'text/html')
+        return 'hours_timeline.html', data, 'text/html'
                           
     def process_ticket(self, req):
         """process a request to /hours/<ticket number>"""
