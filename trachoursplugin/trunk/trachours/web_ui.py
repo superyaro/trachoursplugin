@@ -35,7 +35,7 @@ import time
 
 
 class TracHoursRoadmapFilter(Component):
-    
+
     implements(ITemplateStreamFilter, IRequireComponents)
 
     ### IRequireComponents methods
@@ -72,9 +72,9 @@ class TracHoursRoadmapFilter(Component):
                 xpath = "//*[@class='milestone']/div[1]"
 
             for milestone in milestones:
-                hours[milestone.name] = dict(totalhours=0., 
+                hours[milestone.name] = dict(totalhours=0.,
                                              estimatedhours=0.,)
-            
+
                 db = self.env.get_db_cnx()
                 cursor = db.cursor()
                 cursor.execute("select id from ticket where milestone=%s",
@@ -97,7 +97,7 @@ class TracHoursRoadmapFilter(Component):
                     # total hours for the ticket (seconds -> hours)
                     total_hours = trac_hours.get_total_hours(ticket.id) / 3600.0
                     hours[milestone.name]['totalhours'] += total_hours
-                
+
                     # update date for oldest ticket
                     if ticket.time_created < hours[milestone.name]['date']:
                         hours[milestone.name]['date'] = ticket.time_created
@@ -115,14 +115,14 @@ class TracHoursRoadmapFilter(Component):
             self.hours = hours
             self.href = href
             self.this_milestone = this_milestone
-            
+
         def __iter__(self):
             if self.this_milestone is not None:  # for /milestone/xxx
                 milestone = self.this_milestone
             else:
                 milestone = self.buffer.events[3][1]
-            if not milestone in self.hours.keys(): 
-                return iter([]) 
+            if not milestone in self.hours.keys():
+                return iter([])
             hours = self.hours[milestone]
             estimated_hours = hours['estimatedhours']
             total_hours = hours['totalhours']
@@ -136,7 +136,7 @@ class TracHoursRoadmapFilter(Component):
                 else:
                     items.append(tag.span("Estimated Hours: ", str(estimated_hours), class_="first interval"))
             date = hours['date']
-            link = self.href("hours", milestone=milestone, 
+            link = self.href("hours", milestone=milestone,
                              from_year=date.year,
                              from_month=date.month,
                              from_day=date.day)
@@ -214,7 +214,7 @@ class TracUserHours(Component):
         add_stylesheet(req, 'common/css/report.css')
         add_link(req, 'alternate', req.href(req.path_info, format='csv'),
                  'CSV', 'text/csv', 'csv')
-        
+
         return self.user(req, user)
 
     ### Internal methods
@@ -226,7 +226,7 @@ class TracUserHours(Component):
         data['months'] = list(enumerate(calendar.month_name))
         data['years'] = range(now.year, now.year - 10, -1)
         if 'from_year' in req.args:
-            from_date = get_date(req.args['from_year'], 
+            from_date = get_date(req.args['from_year'],
                                  req.args.get('from_month'),
                                  req.args.get('from_day'))
 
@@ -234,13 +234,13 @@ class TracUserHours(Component):
             from_date = datetime.datetime(now.year, now.month, now.day)
             from_date = from_date - datetime.timedelta(days=7)
         if 'to_year' in req.args:
-            to_date = get_date(req.args['to_year'], 
+            to_date = get_date(req.args['to_year'],
                                req.args.get('to_month'),
                                req.args.get('to_day'),
                                end_of_day=True)
         else:
             to_date = now
-        
+
         data['from_date'] = from_date
         data['to_date'] = to_date
         data['prev_week'] = from_date - datetime.timedelta(days=7)
@@ -288,7 +288,7 @@ class TracUserHours(Component):
             worker_hours[worker] += entry['seconds_worked']
 
         worker_hours = [(worker, seconds/3600.)
-                        for worker, seconds in 
+                        for worker, seconds in
                         sorted(worker_hours.items())]
         data['worker_hours'] = worker_hours
 
@@ -321,7 +321,7 @@ class TracUserHours(Component):
             if ticket not in worker_hours:
                 worker_hours[ticket] = 0
             worker_hours[ticket] += entry['seconds_worked']
-        
+
         data['tickets'] = dict([(i, Ticket(self.env, i))
                                 for i in worker_hours.keys()])
 
@@ -341,13 +341,13 @@ class TracUserHours(Component):
             writer.writerow([title, req.abs_href()])
             writer.writerow([])
             writer.writerow(['From', 'To'])
-            writer.writerow([data[i].strftime(format) 
+            writer.writerow([data[i].strftime(format)
                              for i in 'from_date', 'to_date'])
             writer.writerow([])
             writer.writerow(['Ticket', 'Hours'])
             for ticket, hours in worker_hours:
                 writer.writerow([ticket, hours])
-            
+
             req.send(buffer.getvalue(), 'text/csv')
 
         return 'hours_user.html', data, 'text/html'

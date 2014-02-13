@@ -56,11 +56,11 @@ def query_to_query_string(query):
 
 class TracHoursPlugin(Component):
 
-    implements(IRequestHandler, 
-               ITemplateStreamFilter, 
-               INavigationContributor, 
-               ITemplateProvider, 
-               IPermissionRequestor, 
+    implements(IRequestHandler,
+               ITemplateStreamFilter,
+               INavigationContributor,
+               ITemplateProvider,
+               IPermissionRequestor,
                ITicketManipulator,
                IRequireComponents)
 
@@ -104,10 +104,10 @@ class TracHoursPlugin(Component):
             execute_non_query(self.env, update, formatted, result['ticket'])
 
     def get_ticket_hours(self, ticket_id, from_date=None, to_date=None, worker_filter=None):
-        
+
         if not ticket_id:
             return []
-        
+
         args = []
         if isinstance(ticket_id, int):
             where = "ticket = %s"
@@ -123,7 +123,7 @@ class TracHoursPlugin(Component):
         if to_date:
             where += " and time_started < %s"
             args.append(int(time.mktime(to_date.timetuple())))
-            
+
         if worker_filter and worker_filter != '*any':
             where += " and worker = %s"
             args.append(worker_filter)
@@ -134,7 +134,7 @@ class TracHoursPlugin(Component):
         return result
 
     def get_total_hours(self, ticket_id):
-        """return total SECONDS associated with ticket_id""" 
+        """return total SECONDS associated with ticket_id"""
         return sum([hour['seconds_worked'] for hour in self.get_ticket_hours(int(ticket_id))])
 
 
@@ -161,13 +161,13 @@ class TracHoursPlugin(Component):
         comments = comments.strip()
 
         # execute the SQL
-        sql = """insert into ticket_time(ticket, 
+        sql = """insert into ticket_time(ticket,
                                          time_submitted,
                                          worker,
                                          submitter,
                                          time_started,
                                          seconds_worked,
-                                         comments) values 
+                                         comments) values
 (%s, %s, %s, %s, %s, %s, %s)"""
         execute_non_query(self.env, sql, tid, int(time.time()),
                           worker, submitter, time_started,
@@ -194,7 +194,7 @@ class TracHoursPlugin(Component):
     ### method for IPermissionRequestor
     def get_permission_actions(self):
         """Return a list of actions defined by this component.
-        
+
         The items in the list may either be simple strings, or
         `(string, sequence)` tuples. The latter are considered to be "meta
         permissions" that group several simple actions under one name for
@@ -239,10 +239,10 @@ class TracHoursPlugin(Component):
 
         if path == '/hours':
             return self.process_timeline(req)
-        
+
         if path.startswith('/hours/query'):
             return self.save_query(req)
-        
+
         ### assume a ticket if the other handlers don't work
         return self.process_ticket(req)
 
@@ -251,7 +251,7 @@ class TracHoursPlugin(Component):
     def get_active_navigation_item(self, req):
         """This method is only called for the `IRequestHandler` processing the
         request.
-        
+
         It should return the name of the navigation item that should be
         highlighted as active/current.
         """
@@ -279,7 +279,7 @@ class TracHoursPlugin(Component):
         Each item in the list must be a `(prefix, abspath)` tuple. The
         `prefix` part defines the path in the URL that requests to these
         resources are prefixed with.
-        
+
         The `abspath` is the absolute path to the directory containing the
         resources on the local file system.
         """
@@ -299,7 +299,7 @@ class TracHoursPlugin(Component):
 
     def validate_ticket(self, req, ticket):
         """Validate a ticket after it's been populated from user input.
-        
+
         Must return a list of `(field, message)` tuples, one for each problem
         detected. `field` can be `None` to indicate an overall problem with the
         ticket. Therefore, a return value of `[]` means everything is OK."""
@@ -328,7 +328,7 @@ class TracHoursPlugin(Component):
     ### method for ITemplateStreamFilter
     def filter_stream(self, req, method, filename, stream, data):
         """
-        filter hours and estimated hours fields to have them 
+        filter hours and estimated hours fields to have them
         correctly display on the ticket.html
         """
 
@@ -339,7 +339,7 @@ class TracHoursPlugin(Component):
                 field = '0'
             else:
                 hours = '%.1f' % (self.get_total_hours(ticket_id) / 3600.0)
-                field = tag.a(hours, href=req.href('hours', data['ticket'].id), 
+                field = tag.a(hours, href=req.href('hours', data['ticket'].id),
                               title="hours for ticket %s" % data['ticket'].id)
             totalhours['rendered'] = field
             stream |= Transformer("//input[@id='field-totalhours']").replace(field)
@@ -374,7 +374,7 @@ class TracHoursPlugin(Component):
 
 
     def get_columns(self):
-        return [ 'seconds_worked', 'worker', 'submitter', 
+        return [ 'seconds_worked', 'worker', 'submitter',
                  'time_started', 'time_submitted' ]
 
     def get_default_columns(self):
@@ -389,16 +389,16 @@ class TracHoursPlugin(Component):
             if id:
                 #save over an existing query
                 sql = """update ticket_time_query set title = %s, description = %s, query = %s where id = %s"""
-                execute_non_query(self.env, sql, req.args['title'], 
+                execute_non_query(self.env, sql, req.args['title'],
                                   req.args['description'], req.args['query'],
                                   id)
-            
+
             else:
                 #create a new query
                 sql = """insert into ticket_time_query(title, description,
-                                                       query) 
+                                                       query)
                          values (%s, %s, %s)"""
-                execute_non_query(self.env, sql, req.args['title'], 
+                execute_non_query(self.env, sql, req.args['title'],
                                   req.args['description'], req.args['query'])
                 #fixme: duplicate title?
                 id = get_scalar(self.env, "select id from ticket_time_query where title = %s", 0, req.args['title'])
@@ -408,7 +408,7 @@ class TracHoursPlugin(Component):
         action = req.args.get('action')
         if action == 'new':
             data['query'] = dict(id='0',
-                                  description = '', 
+                                  description = '',
                                   query=query_to_query_string(req.args))
         elif action == "edit":
             data['query'] = self.get_query(int(req.args['query_id']))
@@ -417,8 +417,8 @@ class TracHoursPlugin(Component):
         else:
             #list
             data['queries'] = get_all_dict(self.env, "select id, title, description, query from ticket_time_query")
-            return ('hours_listqueries.html', data, 'text/html')                    
-        return ('hours_savequery.html', data, 'text/html')        
+            return ('hours_listqueries.html', data, 'text/html')
+        return ('hours_savequery.html', data, 'text/html')
 
     def process_query(self, req):
         """redict to save, edit or delete a query based on arguments"""
@@ -441,7 +441,7 @@ class TracHoursPlugin(Component):
             execute_non_query(self.env, sql, query_id)
             if 'query_id' in req.args:
                 del req.args['query_id']
-            return False 
+            return False
 
     def process_timeline(self, req):
         """/hours view"""
@@ -457,7 +457,7 @@ class TracHoursPlugin(Component):
             return
 
         ### lifted from trac.ticket.query.QueryModule.process_request
-        
+
         req.perm.assert_permission('TICKET_VIEW')
 
         constraints = self._get_constraints(req)
@@ -465,26 +465,26 @@ class TracHoursPlugin(Component):
             # If no constraints are given in the URL, use the default ones.
             if req.authname and req.authname != 'anonymous':
                 qstring = 'status!=bogus'
-                user = req.authname 
+                user = req.authname
             else:
                 email = req.session.get('email')
                 name = req.session.get('name')
                 qstring = 'status!=bogus'
-                user = email or name or None 
-                      
-            if user: 
-                qstring = qstring.replace('$USER', user) 
-            self.log.debug('QueryModule: Using default query: %s', str(qstring)) 
+                user = email or name or None
 
-            constraints = Query.from_string(self.env, qstring).constraints 
-            # Ensure no field constraints that depend on $USER are used 
+            if user:
+                qstring = qstring.replace('$USER', user)
+            self.log.debug('QueryModule: Using default query: %s', str(qstring))
+
+            constraints = Query.from_string(self.env, qstring).constraints
+            # Ensure no field constraints that depend on $USER are used
             # if we have no username.
 
             for constraint_set in constraints:
-                for field, vals in constraint_set.items(): 
-                    for val in vals: 
-                        if val.endswith('$USER'): 
-                            del constraint_set[field] 
+                for field, vals in constraint_set.items():
+                    for val in vals:
+                        if val.endswith('$USER'):
+                            del constraint_set[field]
 
         cols = req.args.get('col')
         if isinstance(cols, basestring):
@@ -494,8 +494,8 @@ class TracHoursPlugin(Component):
             cols = ['id', 'summary'] + self.get_default_columns()
 
         # Since we don't show 'id' as an option to the user,
-        # we need to re-insert it here.            
-        if cols and 'id' not in cols: 
+        # we need to re-insert it here.
+        if cols and 'id' not in cols:
             cols.insert(0, 'id')
 
         rows = req.args.get('row', [])
@@ -516,10 +516,10 @@ class TracHoursPlugin(Component):
                       'desc' in req.args, req.args.get('group'),
                       'groupdesc' in req.args, 'verbose' in req.args,
                       rows,
-                      req.args.get('page'), 
+                      req.args.get('page'),
                       max)
         if rm_est_hours: # if not in the columns, remove estimatedhours
-            cols.pop()                 
+            cols.pop()
 
         return self.display_html(req, query)
 
@@ -586,7 +586,7 @@ class TracHoursPlugin(Component):
                 args.get('to_day', now.day),
                 )
         return base.replace('/query', '/hours')
-        
+
 
     def display_html(self, req, query):
         """returns the HTML according to a query for /hours view"""
@@ -650,7 +650,7 @@ class TracHoursPlugin(Component):
         data.setdefault('description', None)
 
         data['all_columns'] = query.get_all_columns() + self.get_columns()
-        # Don't allow the user to remove the id column        
+        # Don't allow the user to remove the id column
         data['all_columns'].remove('id')
         data['all_textareas'] = query.get_all_textareas()
 
@@ -665,7 +665,7 @@ class TracHoursPlugin(Component):
         now = datetime.now()
         # get the date range for the query
         if 'from_year' in req.args:
-            from_date = get_date(req.args['from_year'], 
+            from_date = get_date(req.args['from_year'],
                                  req.args.get('from_month'),
                                  req.args.get('from_day'))
 
@@ -674,7 +674,7 @@ class TracHoursPlugin(Component):
             from_date = from_date - timedelta(days=7) # 1 week ago, by default
 
         if 'to_year' in req.args:
-            to_date = get_date(req.args['to_year'], 
+            to_date = get_date(req.args['to_year'],
                                req.args.get('to_month'),
                                req.args.get('to_day'),
                                end_of_day=True)
@@ -698,7 +698,7 @@ class TracHoursPlugin(Component):
 
         data['query'] = ticket_data['query']
         data['context'] = ticket_data['context']
-        data['row'] = ticket_data['row'] 
+        data['row'] = ticket_data['row']
         if 'comments' in req.args.get('row', []):
             data['row'].append('comments')
         data['constraints'] = ticket_data['clauses']
@@ -713,10 +713,10 @@ class TracHoursPlugin(Component):
         data['order'] = order
         data['desc'] = desc
 
-        headers = [{'name': col, 
+        headers = [{'name': col,
                     'label' : labels.get(col),
                     'href': self.get_href(query, req.args,
-                                          context.href, 
+                                          context.href,
                                           order=col,
                                           desc=(col == order and not desc)
                                           )
@@ -754,7 +754,7 @@ class TracHoursPlugin(Component):
                 ticket_times += records
 
             # sort ticket_times, if needed
-            if order in our_labels:                
+            if order in our_labels:
                 ticket_times.sort(key=lambda x: x[order], reverse=desc)
             data['groups'].append((key, ticket_times))
             num_items += len(ticket_times)
@@ -807,7 +807,7 @@ class TracHoursPlugin(Component):
                 record['time_started'] = self.format_date(record['time_started'])
             if 'time_submitted' in record:
                 record['time_submitted'] = self.format_date(record['time_submitted'])
-            
+
 
         data['query'].num_items = num_items
         data['labels'] = TicketSystem(self.env).get_ticket_field_labels()
@@ -834,43 +834,43 @@ class TracHoursPlugin(Component):
 
         # add csv link
         add_link(req, 'alternate', req.href(req.path_info, format='csv', **req.args), 'CSV', 'text/csv', 'csv')
-                
+
         # add navigation of weeks
-        prev_args = dict(req.args)        
+        prev_args = dict(req.args)
         next_args = dict(req.args)
-                
+
         prev_args['from_year'] = (from_date - timedelta(days=7)).year
         prev_args['from_month'] = (from_date - timedelta(days=7)).month
         prev_args['from_day'] = (from_date - timedelta(days=7)).day
         prev_args['to_year'] = from_date.year
         prev_args['to_month'] = from_date.month
-        prev_args['to_day'] = from_date.day        
-        
+        prev_args['to_day'] = from_date.day
+
         next_args['from_year'] = to_date.year
         next_args['from_month'] = to_date.month
         next_args['from_day'] = to_date.day
         next_args['to_year'] = (to_date + timedelta(days=7)).year
         next_args['to_month'] = (to_date + timedelta(days=7)).month
         next_args['to_day'] = (to_date + timedelta(days=7)).day
-        
+
         add_link(req, 'prev', self.get_href(query, prev_args, context.href), _('Prev Week'))
-        add_link(req, 'next', self.get_href(query, next_args, context.href), _('Next Week'))                                            
+        add_link(req, 'next', self.get_href(query, next_args, context.href), _('Next Week'))
         prevnext_nav(req, _('Prev Week'), _('Next Week'))
-        
+
         add_ctxtnav(req, 'Cross-Project Hours', req.href.hours('multiproject'))
-        add_ctxtnav(req, 'Hours by User', req.href.hours('user', from_day=from_date.day, 
-                                                                 from_month=from_date.month, 
-                                                                 from_year=from_date.year, 
-                                                                 to_day=to_date.year, 
-                                                                 to_month=to_date.month, 
+        add_ctxtnav(req, 'Hours by User', req.href.hours('user', from_day=from_date.day,
+                                                                 from_month=from_date.month,
+                                                                 from_year=from_date.year,
+                                                                 to_day=to_date.year,
+                                                                 to_month=to_date.month,
                                                                  to_year=to_date.year))
         add_ctxtnav(req, 'Saved Queries', req.href.hours('query/list'))
-        
+
         add_stylesheet(req, 'common/css/report.css')
         add_script(req, 'common/js/query.js')
-        
+
         return 'hours_timeline.html', data, 'text/html'
-                          
+
     def process_ticket(self, req):
         """process a request to /hours/<ticket number>"""
 
@@ -913,7 +913,7 @@ class TracHoursPlugin(Component):
             'ticket': ticket,
             'time_records': time_records
         }
-        
+
         # return the rss, if requested
         if req.args.get('format') == 'rss':
             return self.tickethours2rss(req, data)
@@ -921,8 +921,8 @@ class TracHoursPlugin(Component):
         # add rss link
         rss_href = req.href(req.path_info, format='rss')
         add_link(req, 'alternate', rss_href, _('RSS Feed'),
-                 'application/rss+xml', 'rss')        
-        add_ctxtnav(req, 'Back to Ticket #%s' %ticket_id, req.href.ticket(ticket_id))        
+                 'application/rss+xml', 'rss')
+        add_ctxtnav(req, 'Back to Ticket #%s' %ticket_id, req.href.ticket(ticket_id))
 
         return ('hours_ticket.html', data, 'text/html')
 
@@ -932,7 +932,7 @@ class TracHoursPlugin(Component):
     def queryhours2rss(self, req, data):
         """adapt data for /hours to RSS"""
         adapted = {}
-        adapted['title'] = 'Hours worked on %s from %s to %s' % (self.env.project_name, 
+        adapted['title'] = 'Hours worked on %s from %s to %s' % (self.env.project_name,
                                                                  data['from_date'].strftime(self.date_format),
                                                                  data['to_date'].strftime(self.date_format))
         adapted['description'] = data['description'] or adapted['title']
@@ -941,28 +941,28 @@ class TracHoursPlugin(Component):
         for group in data['groups']:
             for entry in group[1]:
                 item = {}
-                hours = float(entry['seconds_worked']) 
+                hours = float(entry['seconds_worked'])
                 minutes = int(60*(hours-int(hours)))
                 hours = int(hours)
-                title = '%s:%02d hours worked by %s' % (hours, minutes, 
+                title = '%s:%02d hours worked by %s' % (hours, minutes,
                                                         entry['worker'])
                 item['title'] = title
-                item['description'] = title                
+                item['description'] = title
                 comments = entry.get('comments')
-                if comments:                    
+                if comments:
                     item['description'] += ': %s' % comments
 
                 # the 'GMT' business is wrong
                 # maybe use py2rssgen a la bitsyblog?
                 time_started = dateutil.parser.parse(entry['time_started']) # XXX hack
                 item['date'] = time_started.strftime('%a, %d %b %Y %T GMT')
-                
+
                 link = req.abs_href(req.path_info, entry['ticket'])
                 item['guid'] = '%s#%s' % (link, entry['id'])
                 item['url'] = item['guid']
                 item['comments'] = req.abs_href('ticket', entry['ticket'])
                 items.append(item)
-            
+
         adapted['items'] = items
         return ('hours.rss', adapted, 'application/rss+xml')
 
@@ -981,7 +981,7 @@ class TracHoursPlugin(Component):
         items = []
         for record in data['time_records']:
             item = {}
-            title = '%s:%02d hours worked by %s' % (record['hours_worked'], 
+            title = '%s:%02d hours worked by %s' % (record['hours_worked'],
                                                    record['minutes_worked'],
                                                    record['worker'])
             item['title'] = title
@@ -1021,7 +1021,7 @@ class TracHoursPlugin(Component):
 
         format = '%B %d, %Y'
         writer.writerow(['From', 'To'])
-        writer.writerow([data[i].strftime(format) 
+        writer.writerow([data[i].strftime(format)
                          for i in 'from_date', 'to_date'])
         writer.writerow([])
 
@@ -1049,7 +1049,7 @@ class TracHoursPlugin(Component):
         # permission check
         req.perm.require('TICKET_ADD_HOURS')
 
-        # 
+        #
         now = datetime.now()
         logged_in_user = req.authname
         worker = req.args.get('worker', logged_in_user)
@@ -1077,13 +1077,13 @@ class TracHoursPlugin(Component):
             # XXX handle better
             raise ValueError("Please enter a valid number of hours")
             req.redirect(req.href(req.path_info))
-        
+
         # comments on hours event
         comments = req.args.get('comments', '').strip()
 
         # add the hours
-        self.add_ticket_hours(ticket.id, worker, seconds_worked, 
-                              submitter=logged_in_user, time_started=started, 
+        self.add_ticket_hours(ticket.id, worker, seconds_worked,
+                              submitter=logged_in_user, time_started=started,
                               comments=comments)
 
         # if comments are made, anote the ticket
@@ -1095,7 +1095,7 @@ class TracHoursPlugin(Component):
 
             # avoid adding hours that are (erroneously) noted in the comments
             # see #4791
-            comment = comment.replace(' ', '\t') 
+            comment = comment.replace(' ', '\t')
 
             ticket.save_changes(logged_in_user, comment)
 #            index = len(ticket.get_changelog()) - 1 # XXX can/should this be used?
@@ -1115,7 +1115,7 @@ class TracHoursPlugin(Component):
         for field, newval in req.args.items():
             if field.startswith("hours_"):
                 id = int(field[len("hours_"):])
-                new_hours[id] = (int(float(newval) * 3600) + 
+                new_hours[id] = (int(float(newval) * 3600) +
                                  int(float(req.args['minutes_%s' % id]) * 60))
 
         # remove checked hours
@@ -1155,4 +1155,3 @@ class TracHoursPlugin(Component):
         self.update_ticket_hours(tickets)
 
         req.redirect(req.href(req.path_info))
-

@@ -52,15 +52,15 @@ def projects_from_directory(directory):
 def query_all(projects, path, base_url=None):
     """
     * projects: urls
-    * path: 
+    * path:
     """
     feeds = {}
     for project in projects:
         if base_url:
             url = urljoin(base_url, project, path)
         else:
-            url = urljoin(project, path) 
-        
+            url = urljoin(project, path)
+
         feed = feedparser.parse(url)
         if hasattr(feed.feed, 'title'):
             feeds[project] = feed
@@ -129,13 +129,13 @@ class MultiprojectHours(Component):
         now = datetime.datetime.now()
 
         # XXX copy + pasted from hours.py
-        data['months'] = [ (i, calendar.month_name[i]) for i in range(1,13) ]        
+        data['months'] = [ (i, calendar.month_name[i]) for i in range(1,13) ]
         data['years'] = range(now.year, now.year - 10, -1)
-        data['days'] = range(1, 32)        
+        data['days'] = range(1, 32)
 
         # get the date range for the query
         if 'from_year' in req.args:
-            from_date = get_date(req.args['from_year'], 
+            from_date = get_date(req.args['from_year'],
                                  req.args.get('from_month'),
                                  req.args.get('from_day'))
 
@@ -144,7 +144,7 @@ class MultiprojectHours(Component):
             from_date = from_date - datetime.timedelta(days=7) # 1 week ago, by default
 
         if 'to_year' in req.args:
-            to_date = get_date(req.args['to_year'], 
+            to_date = get_date(req.args['to_year'],
                                  req.args.get('to_month'),
                                  req.args.get('to_day'),
                                  end_of_day=True)
@@ -165,10 +165,10 @@ class MultiprojectHours(Component):
 
         # directory for all projects
         # XXX this could be configurable in an intelligent way
-        directory = os.path.split(self.env.path)[0] 
+        directory = os.path.split(self.env.path)[0]
 
         rows = query_from_url(url, path=path, directory=directory)
-        data['rows'] = rows[1:] 
+        data['rows'] = rows[1:]
         data['projects'] = []
 
         # make some nice links from the data
@@ -200,7 +200,7 @@ class MultiprojectHours(Component):
             row[-1] = hours_format % row[-1]
 
         data['total'] = hours_format % total
-            
+
         return ('hours_multiproject.html', data, 'text/html')
 
 

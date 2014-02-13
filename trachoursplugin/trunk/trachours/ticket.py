@@ -34,14 +34,14 @@ class TracHoursByComment(Component):
     hours_regex = r'(([0-9]+(\.[0-9]+)?)|([0-9]+:[0-5][0-9])) *hours'
 
     # for singular hours: 1 hour
-    singular_hour_regex = r'((^)|(\s))1 *hour((\W)|($))' 
+    singular_hour_regex = r'((^)|(\s))1 *hour((\W)|($))'
 
     ### method for IRequireComponents
     def requires(self):
         return [TracHoursPlugin]
 
     ### methods for ITicketManipulator
-    
+
     def prepare_ticket(self, req, ticket, fields, actions):
         """Not currently called, but should be provided for future
         compatibility."""
@@ -50,14 +50,14 @@ class TracHoursByComment(Component):
         """Parse comments to add hours using '%f hours' syntax. """
 
         # markup the comment and add hours
-        # For example, the comment "Worked 2 hours." on ticket 
+        # For example, the comment "Worked 2 hours." on ticket
         # 18 is transformed to "Worked [/hours/18 2 hours]." and
-        # a entry is made in the total hours for ticket 18.        
+        # a entry is made in the total hours for ticket 18.
         if 'TICKET_ADD_HOURS' in req.perm('ticket', ticket.id):
             comment = req.args.get('comment')
             if comment:
                 req.args['comment'] = self.munge_comment(comment, ticket)
-                    
+
         return []
 
     def munge_comment(self, comment, ticket):
@@ -102,7 +102,7 @@ class TracHoursByComment(Component):
 
     def ticket_changed(self, ticket, comment, author, old_values):
         """Called when a ticket is modified.
-        
+
         `old_values` is a dictionary containing the previous values of the
         fields that have changed.
         """
@@ -139,4 +139,3 @@ class TracHoursByComment(Component):
         for match in re.finditer(self.singular_hour_regex, comment):
             _comment = re.sub('\[/hours/[0-9]+ 1 hour\]', '1 hour', comment)
             trachours.add_ticket_hours(ticket, worker, 3600.0, comments=_comment)
-
