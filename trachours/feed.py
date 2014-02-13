@@ -21,5 +21,3 @@ def total_hours(feed):
         hours_dict.setdefault(worker, 0)
         hours_dict[worker] += time_worked
     return hours_dict
-
-        

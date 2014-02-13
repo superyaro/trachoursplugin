@@ -39,7 +39,7 @@ class SetupTracHours(Component):
 
     def environment_needs_upgrade(self, db):
         """Called when Trac checks whether the environment needs to be upgraded.
-        
+
         Should return `True` if this participant needs an upgrade to be
         performed, `False` otherwise.
         """
@@ -48,7 +48,7 @@ class SetupTracHours(Component):
 
     def upgrade_environment(self, db):
         """Actually perform an environment upgrade.
-        
+
         Implementations of this method should not commit any database
         transactions. This is done implicitly after all participants have
         performed the upgrades they need without an error being raised.
@@ -95,7 +95,7 @@ class SetupTracHours(Component):
     def update_custom_fields(self):
         ticket_custom = 'ticket-custom'
         for name in custom_fields:
-            field = custom_fields[name].copy() 
+            field = custom_fields[name].copy()
             field_type = field.pop('type', 'text')
             if not self.config.get(ticket_custom, field_type):
                 self.config.set(ticket_custom, name, field_type)

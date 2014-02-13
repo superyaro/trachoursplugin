@@ -49,4 +49,3 @@ setup(name='TracHoursPlugin',
       test_suite='trachours.tests.test_suite',
       tests_require=[]
       )
-

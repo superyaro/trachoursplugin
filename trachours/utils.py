@@ -42,9 +42,8 @@ def get_date(year, month=1, day=1, end_of_day=False):
     year = int(year)
     month = int(month)
     day = int(day)
-    
+
     if end_of_day:
         return datetime.datetime(year, month, truncate_to_month(day, month, year), 23, 59, 59)
     else:
         return datetime.datetime(year, month, truncate_to_month(day, month, year))
-    
