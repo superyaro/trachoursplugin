@@ -16,8 +16,7 @@
 <div xmlns="http://www.w3.org/1999/xhtml"
      xmlns:py="http://genshi.edgewall.org/"
      xmlns:xi="http://www.w3.org/2001/XInclude">
-  <xi:include href="macros.html" />
-  
+
   <h3>${double_count_warning}</h3>
   <py:for each="group_index, (groupname, results) in enumerate(groups)">
     <h2 class="report-result" py:if="groupname">
@@ -31,7 +30,7 @@
           <th py:for="header in headers"
             class="$header.name${order == header.name and (desc and ' desc' or ' asc') or ''}">
             <a title="Sort by $header.label${order == header.name and not desc and ' (descending)' or ''}"
-              href="$header.href">${header.label}</a>
+               href="$header.href">${header.label}</a>
           </th>
         </tr>
       </thead>
@@ -94,5 +93,3 @@
     </table>
   </py:for>
 </div>
-
-

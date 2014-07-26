@@ -7,6 +7,13 @@
 # you should have received as part of this distribution.
 #
 
+import calendar
+import csv
+import datetime
+import time
+from StringIO import StringIO
+from pkg_resources import parse_version
+
 from genshi.builder import tag
 from genshi.filters import Transformer
 from genshi.filters.transform import StreamBuffer
@@ -14,6 +21,7 @@ from trac import __version__ as TRAC_VERSION
 from trac.core import *
 from trac.ticket import Ticket
 from trac.ticket.model import Milestone
+from trac.util.translation import _
 from trac.web.api import IRequestHandler, ITemplateStreamFilter
 from trac.web.chrome import (
     Chrome, ITemplateProvider, add_link, add_stylesheet
@@ -23,27 +31,20 @@ from componentdependencies.interface import IRequireComponents
 from hours import TracHoursPlugin
 from ticketsidebarprovider.interface import ITicketSidebarProvider
 from ticketsidebarprovider.ticketsidebar import TicketSidebarProvider
-from tracsqlhelper import get_all_dict, get_column
+from tracsqlhelper import get_all_dict
 from utils import get_date, hours_format
-
-from StringIO import StringIO
-from pkg_resources import parse_version
-import calendar
-import csv
-import datetime
-import time
 
 
 class TracHoursRoadmapFilter(Component):
 
-    implements(ITemplateStreamFilter, IRequireComponents)
+    implements(IRequireComponents, ITemplateStreamFilter)
 
-    ### IRequireComponents methods
+    # IRequireComponents methods
 
     def requires(self):
         return [TracHoursPlugin]
 
-    ### ITemplateStreamFilter methods
+    # ITemplateStreamFilter methods
 
     def filter_stream(self, req, method, filename, stream, data):
         """
@@ -131,10 +132,12 @@ class TracHoursRoadmapFilter(Component):
             items = []
             if estimated_hours:
                 if parse_version(TRAC_VERSION) < parse_version('1.0'):
-                    items.append(tag.dt("Estimated Hours:"))
+                    items.append(tag.dt(_("Estimated Hours:")))
                     items.append(tag.dd(str(estimated_hours)))
                 else:
-                    items.append(tag.span("Estimated Hours: ", str(estimated_hours), class_="first interval"))
+                    items.append(tag.span(_("Estimated Hours: "),
+                                          str(estimated_hours),
+                                          class_="first interval"))
             date = hours['date']
             link = self.href("hours", milestone=milestone,
                              from_year=date.year,
@@ -145,20 +148,23 @@ class TracHoursRoadmapFilter(Component):
                 items.append(tag.dd(tag.a(hours_format % total_hours, href=link)))
                 return iter(tag.dl(*items))
             else:
-                items.append(tag.span(tag.a("Total Hours: ", hours_format % total_hours, href=link), class_="interval"))
-                return iter(tag.p(*items, class_="legend"))
+                items.append(tag.span(tag.a(_("Total Hours: "),
+                                            hours_format % total_hours,
+                                            href=link),
+                                      class_='interval'))
+                return iter(tag.p(*items, class_='legend'))
 
 
 class TracHoursSidebarProvider(Component):
 
     implements(ITicketSidebarProvider, IRequireComponents)
 
-    ### IRequireComponents methods
+    # IRequireComponents methods
 
     def requires(self):
         return [TracHoursPlugin, TicketSidebarProvider]
 
-    ### ITicketSidebarProvider methods
+    # ITicketSidebarProvider methods
 
     def enabled(self, req, ticket):
         if ticket.id and req.authname and 'TICKET_ADD_HOURS' in req.perm:
@@ -169,9 +175,9 @@ class TracHoursSidebarProvider(Component):
         data = {'worker': req.authname,
                 'action': req.href('hours', ticket.id)}
         return Chrome(self.env). \
-            load_template('hours_sidebar.html').generate(**data)
+               load_template('hours_sidebar.html').generate(**data)
 
-    ### ITemplateProvider methods
+    # ITemplateProvider methods
 
     def get_htdocs_dirs(self):
         return []
@@ -185,12 +191,12 @@ class TracUserHours(Component):
 
     implements(IRequireComponents, ITemplateProvider, IRequestHandler)
 
-    ### IRequireComponents methods
+    # IRequireComponents methods
 
     def requires(self):
         return [TracHoursPlugin]
 
-    ### ITemplateProvider methods
+    # ITemplateProvider methods
 
     def get_htdocs_dirs(self):
         return []
@@ -199,7 +205,7 @@ class TracUserHours(Component):
         from pkg_resources import resource_filename
         return [resource_filename(__name__, 'templates')]
 
-    ### IRequestHandler methods
+    # IRequestHandler methods
 
     def match_request(self, req):
         return req.path_info == '/hours/user' or \
@@ -217,7 +223,7 @@ class TracUserHours(Component):
 
         return self.user(req, user)
 
-    ### Internal methods
+    # Internal methods
 
     def date_data(self, req, data):
         """data for the date"""

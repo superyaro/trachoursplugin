@@ -7,22 +7,20 @@
 # you should have received as part of this distribution.
 #
 
-from genshi.builder import tag
-from trac.core import *
-from trac.env import open_environment
-from trac.web.api import IRequestHandler
-from trac.web.chrome import add_ctxtnav
-from trac.web.href import Href
-
-from trachours.feed import total_hours
-from trachours.utils import get_date, hours_format, urljoin
-
 import calendar
 import datetime
 import feedparser
 import os
-import sys
 import urllib2
+
+from genshi.builder import tag
+from trac.core import *
+from trac.env import open_environment
+from trac.web.api import IRequestHandler
+from trac.web.href import Href
+
+from trachours.feed import total_hours
+from trachours.utils import get_date, hours_format, urljoin
 
 try:
     import lxml.html
@@ -49,6 +47,7 @@ def projects_from_directory(directory):
         projects.append(entry)
     return projects
 
+
 def query_all(projects, path, base_url=None):
     """
     * projects: urls
@@ -67,6 +66,7 @@ def query_all(projects, path, base_url=None):
         else:
             feeds[project] = None
     return feeds
+
 
 def query_from_url(url, path='/hours?format=rss', directory=None):
     if directory:
@@ -97,6 +97,7 @@ def query_from_url(url, path='/hours?format=rss', directory=None):
         row.append(total)
         rows.append(row)
     return rows
+
 
 class MultiprojectHours(Component):
 
@@ -201,7 +202,7 @@ class MultiprojectHours(Component):
 
         data['total'] = hours_format % total
 
-        return ('hours_multiproject.html', data, 'text/html')
+        return 'hours_multiproject.html', data, 'text/html'
 
 
 if __name__ == '__main__':
