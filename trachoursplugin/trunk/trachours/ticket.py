@@ -23,12 +23,15 @@ try:
 except ImportError:
     IEmailHandler = None
 
+
 class TracHoursByComment(Component):
 
     if IEmailHandler:
-        implements(IEmailHandler, IRequireComponents, ITicketManipulator, ITicketChangeListener)
+        implements(IEmailHandler, IRequireComponents, ITicketChangeListener,
+                   ITicketManipulator)
     else:
-        implements(IRequireComponents, ITicketManipulator, ITicketChangeListener)
+        implements(IRequireComponents, ITicketChangeListener,
+                   ITicketManipulator)
 
     # for ticket comments: 1.5 hours or 1:30 hours
     hours_regex = r'(([0-9]+(\.[0-9]+)?)|([0-9]+:[0-5][0-9])) *hours'
@@ -36,23 +39,17 @@ class TracHoursByComment(Component):
     # for singular hours: 1 hour
     singular_hour_regex = r'((^)|(\s))1 *hour((\W)|($))'
 
-    ### method for IRequireComponents
+    # IRequireComponents methods
+
     def requires(self):
         return [TracHoursPlugin]
 
-    ### methods for ITicketManipulator
+    # ITicketManipulator methods
 
     def prepare_ticket(self, req, ticket, fields, actions):
-        """Not currently called, but should be provided for future
-        compatibility."""
+        pass
 
     def validate_ticket(self, req, ticket):
-        """Parse comments to add hours using '%f hours' syntax. """
-
-        # markup the comment and add hours
-        # For example, the comment "Worked 2 hours." on ticket
-        # 18 is transformed to "Worked [/hours/18 2 hours]." and
-        # a entry is made in the total hours for ticket 18.
         if 'TICKET_ADD_HOURS' in req.perm('ticket', ticket.id):
             comment = req.args.get('comment')
             if comment:
@@ -68,16 +65,18 @@ class TracHoursByComment(Component):
             return u'[%s %s]' % (('/hours/%s' % ticket.id), match.group())
 
         comment = re.sub(self.hours_regex, replace, comment)
-        comment = re.sub(self.singular_hour_regex, u' [/hours/%s 1 hour]' % ticket.id, comment)
+        comment = re.sub(self.singular_hour_regex, u' [/hours/%s 1 hour]'
+                                                   % ticket.id, comment)
         return comment
 
-    ### methods for IEmailHandler
+    # IEmailHandler methods
 
     def match(self, message):
         reporter = emailaddr2user(self.env, message['from'])
         reply_to_ticket = ReplyToTicket(self.env)
         perm = PermissionCache(self.env, reporter)
-        if 'TICKET_ADD_HOURS' in perm('ticket', reply_to_ticket.ticket(message).id):
+        if 'TICKET_ADD_HOURS' in perm('ticket',
+                                      reply_to_ticket.ticket(message).id):
             return bool(reply_to_ticket.ticket(message))
         else:
             return False
@@ -87,37 +86,29 @@ class TracHoursByComment(Component):
         ticket = reply_to_ticket.ticket(message)
         payload = message.get_payload()
         if isinstance(payload, basestring):
-            if message.get('Content-Disposition', 'inline') == 'inline' and message.get_content_maintype() == 'text':
+            if message.get('Content-Disposition', 'inline') == 'inline' \
+                    and message.get_content_maintype() == 'text':
                 message.set_payload(self.munge_comment(payload, ticket))
         else:
             for _message in payload:
                 self.invoke(_message, warnings)
         return message
 
-
-    ### ITicketChangeListener methods
-
-    """Extension point interface for components that require notification
-    when tickets are created, modified, or deleted."""
+    # ITicketChangeListener methods
 
     def ticket_changed(self, ticket, comment, author, old_values):
-        """Called when a ticket is modified.
-
-        `old_values` is a dictionary containing the previous values of the
-        fields that have changed.
-        """
         perm = PermissionCache(self.env, author)
         if perm.has_permission('TICKET_ADD_HOURS'):
             self.add_hours_by_comment(comment, ticket.id, author)
 
     def ticket_created(self, ticket):
-        """Called when a ticket is created."""
+        pass
 
     def ticket_deleted(self, ticket):
-        """Called when a ticket is deleted."""
         TracHoursPlugin(self.env).delete_ticket_hours(ticket.id)
 
-    ### internal method
+    # Internal methods
+
     def add_hours_by_comment(self, comment, ticket, worker):
         """
         add hours to a ticket via a comment string
@@ -133,9 +124,12 @@ class TracHoursByComment(Component):
                 seconds = 3600.0*float(hours) + 60.0*float(minutes)
             else:
                 seconds = 3600.0*float(hours)
-            _comment = re.sub('\[/hours/[0-9]+ ' + self.hours_regex + '\]', match.group(), comment)
-            trachours.add_ticket_hours(ticket, worker, seconds, comments=_comment)
+            _comment = re.sub('\[/hours/[0-9]+ ' + self.hours_regex + '\]',
+                              match.group(), comment)
+            trachours.add_ticket_hours(ticket, worker, seconds,
+                                       comments=_comment)
 
         for match in re.finditer(self.singular_hour_regex, comment):
             _comment = re.sub('\[/hours/[0-9]+ 1 hour\]', '1 hour', comment)
-            trachours.add_ticket_hours(ticket, worker, 3600.0, comments=_comment)
+            trachours.add_ticket_hours(ticket, worker, 3600.0,
+                                       comments=_comment)

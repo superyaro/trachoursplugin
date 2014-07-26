@@ -8,7 +8,7 @@
 #
 
 from trac.core import *
-from trac.db import Column, DatabaseManager, Index, Table
+from trac.db.schema import Column, Index, Table
 from trac.env import IEnvironmentSetupParticipant
 
 from tracsqlhelper import *
@@ -25,6 +25,7 @@ custom_fields = \
          'value': '0'
         }
     }
+
 
 class SetupTracHours(Component):
 
@@ -62,7 +63,6 @@ class SetupTracHours(Component):
                 step(self)
         execute_non_query(self.env, "update system set value='%s' where name='trachours.db_version';" % len(self.steps))
 
-
     ### helper methods
 
     def version(self):
@@ -71,7 +71,6 @@ class SetupTracHours(Component):
         if version:
             return int(version)
         return 0
-
 
     ### upgrade steps
 
@@ -119,7 +118,8 @@ class SetupTracHours(Component):
             SELECT ticket from ticket_custom WHERE name='totalhours');""")
 
     # ordered steps for upgrading
-    steps = [ [ create_db, update_custom_fields ], # version 1
-              [ add_query_table ], # version 2
-              [ initialize_old_tickets ], # version 3
-            ]
+    steps = [
+        [ create_db, update_custom_fields ], # version 1
+        [ add_query_table ], # version 2
+        [ initialize_old_tickets ], # version 3
+    ]

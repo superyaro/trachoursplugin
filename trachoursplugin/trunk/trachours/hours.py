@@ -7,13 +7,21 @@
 # you should have received as part of this distribution.
 #
 
+import calendar
+import csv
+import dateutil.parser
+import re
+import time
+from StringIO import StringIO
+from datetime import datetime, timedelta
+
 from genshi.builder import tag
 from genshi.filters import Transformer
 from trac.core import *
 from trac.mimeview.api import Context
 from trac.perm import IPermissionRequestor
-from trac.ticket import Ticket
 from trac.ticket.api import ITicketManipulator, TicketSystem
+from trac.ticket.model import Ticket
 from trac.ticket.query import Query
 from trac.util.datefmt import to_timestamp, utc
 from trac.util.translation import _
@@ -28,14 +36,6 @@ from tracsqlhelper import *
 from multiproject import MultiprojectHours
 from setup import SetupTracHours
 from utils import get_all_users, get_date
-
-from StringIO import StringIO
-from datetime import datetime, timedelta
-import calendar
-import csv
-import dateutil.parser
-import re
-import time
 
 
 def query_to_query_string(query):
@@ -64,7 +64,6 @@ class TracHoursPlugin(Component):
                ITicketManipulator,
                IRequireComponents)
 
-
     ###### class data
     date_format = '%B %d, %Y'     # XXX should go to api ?
     fields = [dict(name='id', label='Ticket'), #note that ticket_time id is clobbered by ticket id
@@ -73,7 +72,6 @@ class TracHoursPlugin(Component):
               dict(name='submitter', label='Work submitted by'),
               dict(name='time_started', label='Work done on'),
               dict(name='time_submitted', label='Work recorded on')]
-
 
     ###### API
 
@@ -86,7 +84,6 @@ class TracHoursPlugin(Component):
         update the totalhours ticket field from the tracked hours information
         * ids: ticket ids (list)
         """
-
         results = get_all_dict(self.env, "select sum(seconds_worked) as t, ticket from ticket_time where ticket in (%s) group by ticket" % ",".join(map(str,ids)))
 
         #If no work has been logged for a ticket id, nothing will be returned for that id, but we want it to return 0
@@ -137,7 +134,6 @@ class TracHoursPlugin(Component):
         """return total SECONDS associated with ticket_id"""
         return sum([hour['seconds_worked'] for hour in self.get_ticket_hours(int(ticket_id))])
 
-
     def add_ticket_hours(self, tid, worker, seconds_worked, submitter=None, time_started=None, comments=''):
         """
         add hours to a ticket:
@@ -184,28 +180,17 @@ class TracHoursPlugin(Component):
         execute_non_query(self.env, """
             DELETE FROM ticket_time WHERE ticket=%s""", tid)
 
-    ###### methods and attributes for trac Interfaces
-
-    ### method for IRequireComponents
+    # IRequireComponents methods
     def requires(self):
         return [SetupTracHours]
 
-
-    ### method for IPermissionRequestor
+    # IPermissionRequestor methods
     def get_permission_actions(self):
-        """Return a list of actions defined by this component.
-
-        The items in the list may either be simple strings, or
-        `(string, sequence)` tuples. The latter are considered to be "meta
-        permissions" that group several simple actions under one name for
-        convenience.
-        """
         return ['TICKET_ADD_HOURS', 'TICKET_VIEW_HOURS']
 
     # IRequestHandler methods
 
     def match_request(self, req):
-        """Return whether the handler wants to process the given request."""
         path = req.path_info.rstrip('/')
         if not path.startswith('/hours'):
             return False
@@ -221,19 +206,6 @@ class TracHoursPlugin(Component):
             return False
 
     def process_request(self, req):
-        """Process the request. For ClearSilver, return a (template_name,
-        content_type) tuple, where `template` is the ClearSilver template to use
-        (either a `neo_cs.CS` object, or the file name of the template), and
-        `content_type` is the MIME type of the content. For Genshi, return a
-        (template_name, data, content_type) tuple, where `data` is a dictionary
-        of substitutions for the template.
-
-        For both templating systems, "text/html" is assumed if `content_type` is
-        `None`.
-
-        Note that if template processing should not occur, this method can
-        simply send the response itself and not return anything.
-        """
         req.perm.require('TICKET_VIEW_HOURS')
         path = req.path_info.rstrip('/')
 
@@ -243,55 +215,30 @@ class TracHoursPlugin(Component):
         if path.startswith('/hours/query'):
             return self.save_query(req)
 
-        ### assume a ticket if the other handlers don't work
+        # assume a ticket if the other handlers don't work
         return self.process_ticket(req)
 
-    ### INavigationContributor methods
+    # INavigationContributor methods
 
     def get_active_navigation_item(self, req):
-        """This method is only called for the `IRequestHandler` processing the
-        request.
-
-        It should return the name of the navigation item that should be
-        highlighted as active/current.
-        """
         return 'hours'
 
     def get_navigation_items(self, req):
-        """Should return an iterable object over the list of navigation items to
-        add, each being a tuple in the form (category, name, text).
-        """
         if 'TICKET_VIEW_HOURS' in req.perm:
             yield ('mainnav', 'hours',
                    tag.a(_("Hours"), href=req.href.hours(), accesskey='H'))
 
 
-    ### ITemplateProvider methods
-
-    """Extension point interface for components that provide their own
-    ClearSilver templates and accompanying static resources.
-    """
+    # ITemplateProvider methods
 
     def get_htdocs_dirs(self):
-        """Return a list of directories with static resources (such as style
-        sheets, images, etc.)
-
-        Each item in the list must be a `(prefix, abspath)` tuple. The
-        `prefix` part defines the path in the URL that requests to these
-        resources are prefixed with.
-
-        The `abspath` is the absolute path to the directory containing the
-        resources on the local file system.
-        """
         return []
 
     def get_templates_dirs(self):
-        """Return a list of directories containing the provided template files."""
         from pkg_resources import resource_filename
         return [resource_filename(__name__, 'templates')]
 
-
-    ### methods for ITicketManipulator
+    # ITicketManipulator methods
 
     def prepare_ticket(self, req, ticket, fields, actions):
         """Not currently called, but should be provided for future
@@ -324,8 +271,8 @@ class TracHoursPlugin(Component):
 
         return []
 
+    #ITemplateStreamFilter methods
 
-    ### method for ITemplateStreamFilter
     def filter_stream(self, req, method, filename, stream, data):
         """
         filter hours and estimated hours fields to have them
@@ -333,7 +280,8 @@ class TracHoursPlugin(Component):
         """
 
         if filename == 'ticket.html' and 'TICKET_VIEW_HOURS' in req.perm:
-            totalhours = [ field for field in data['fields'] if field['name'] == 'totalhours' ][0]
+            totalhours = [field for field in data['fields']
+                          if field['name'] == 'totalhours'][0]
             ticket_id = data['ticket'].id
             if ticket_id is None: # new ticket
                 field = '0'
@@ -346,8 +294,7 @@ class TracHoursPlugin(Component):
 
         return stream
 
-
-    ###### internal methods
+    # Internal methods
 
     ### methods for date format
 
@@ -372,14 +319,12 @@ class TracHoursPlugin(Component):
             raise KeyError("No such query %s" % query_id)
         return results[0]
 
-
     def get_columns(self):
         return [ 'seconds_worked', 'worker', 'submitter',
                  'time_started', 'time_submitted' ]
 
     def get_default_columns(self):
         return ['time_started', 'seconds_worked', 'worker',  ]
-
 
     def save_query(self, req):
         data = {}
@@ -528,7 +473,7 @@ class TracHoursPlugin(Component):
     def _get_constraints(self, req):
         """PLEASE FILL IN THIS DOCSTRING!!!"""
 
-        constraints = {} # PLEASE COMMENT WHAT THE HELL THIS VARIABLE MEANS
+        constraints = {}
 
         ### PLEASE COMMENT WHAT IS DOING HERE AND WHY
         ticket_fields = [f['name'] for f in
@@ -587,10 +532,8 @@ class TracHoursPlugin(Component):
                 )
         return base.replace('/query', '/hours')
 
-
     def display_html(self, req, query):
         """returns the HTML according to a query for /hours view"""
-        db = self.env.get_db_cnx()
 
         # The most recent query is stored in the user session;
         orig_list = None
@@ -600,14 +543,14 @@ class TracHoursPlugin(Component):
         query_constraints = unicode(query.constraints)
         if query_constraints != req.session.get('query_constraints') \
                 or query_time < orig_time - timedelta(hours=1):
-            tickets = query.execute(req, db)
+            tickets = query.execute(req)
             # New or outdated query, (re-)initialize session vars
             req.session['query_constraints'] = query_constraints
             req.session['query_tickets'] = ' '.join([str(t['id']) for t in tickets])
         else:
             orig_list = [int(id) for id
                          in req.session.get('query_tickets', '').split()]
-            tickets = query.execute(req, db, orig_list)
+            tickets = query.execute(req, cached_ids=orig_list)
             orig_time = query_time
 
         context = Context.from_request(req, 'query')
@@ -759,7 +702,6 @@ class TracHoursPlugin(Component):
             data['groups'].append((key, ticket_times))
             num_items += len(ticket_times)
 
-
         data['double_count_warning'] = ''
 
         # group by ticket id or other time_ticket fields if necessary
@@ -807,7 +749,6 @@ class TracHoursPlugin(Component):
                 record['time_started'] = self.format_date(record['time_started'])
             if 'time_submitted' in record:
                 record['time_submitted'] = self.format_date(record['time_submitted'])
-
 
         data['query'].num_items = num_items
         data['labels'] = TicketSystem(self.env).get_ticket_field_labels()
@@ -926,7 +867,6 @@ class TracHoursPlugin(Component):
 
         return ('hours_ticket.html', data, 'text/html')
 
-
     ### methods for transforming data to rss
 
     def queryhours2rss(self, req, data):
@@ -964,9 +904,7 @@ class TracHoursPlugin(Component):
                 items.append(item)
 
         adapted['items'] = items
-        return ('hours.rss', adapted, 'application/rss+xml')
-
-
+        return 'hours.rss', adapted, 'application/rss+xml'
 
     def tickethours2rss(self, req, data):
         """adapt data for /hours/<ticket number> to RSS"""
@@ -998,7 +936,7 @@ class TracHoursPlugin(Component):
 
             items.append(item)
         adapted['items'] = items
-        return ('hours.rss', adapted, 'text/xml')
+        return 'hours.rss', adapted, 'text/xml'
 
 
     ### method for transforming hours to csv
@@ -1040,8 +978,7 @@ class TracHoursPlugin(Component):
 
         req.send(buffer.getvalue(), "text/csv")
 
-
-    ### methods for adding and editting hours associated with tickets
+    ### methods for adding and editing hours associated with tickets
 
     def do_ticket_change(self, req, ticket):
         """respond to a request to add hours to a ticket"""
@@ -1098,7 +1035,7 @@ class TracHoursPlugin(Component):
             comment = comment.replace(' ', '\t')
 
             ticket.save_changes(logged_in_user, comment)
-#            index = len(ticket.get_changelog()) - 1 # XXX can/should this be used?
+            # index = len(ticket.get_changelog()) - 1 # XXX can/should this be used?
 
         location = req.environ.get('HTTP_REFERER', req.href(req.path_info))
         req.redirect(location)
@@ -1136,8 +1073,7 @@ class TracHoursPlugin(Component):
                 continue
 
             if not hour['worker'] == req.authname:
-                req.perm.require("TRAC_ADMIN")
-
+                req.perm.require('TRAC_ADMIN')
 
         # perform the edits
         for hour in hours:
