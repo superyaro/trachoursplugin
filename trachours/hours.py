@@ -280,17 +280,19 @@ class TracHoursPlugin(Component):
         """
 
         if filename == 'ticket.html' and 'TICKET_VIEW_HOURS' in req.perm:
-            totalhours = [field for field in data['fields']
-                          if field['name'] == 'totalhours'][0]
-            ticket_id = data['ticket'].id
-            if ticket_id is None: # new ticket
-                field = '0'
-            else:
-                hours = '%.1f' % (self.get_total_hours(ticket_id) / 3600.0)
-                field = tag.a(hours, href=req.href('hours', data['ticket'].id),
-                              title="hours for ticket %s" % data['ticket'].id)
-            totalhours['rendered'] = field
-            stream |= Transformer("//input[@id='field-totalhours']").replace(field)
+            field = [field for field in data['fields']
+                           if field['name'] == 'totalhours']
+            if field:
+                totalhours = field[0]
+                ticket_id = data['ticket'].id
+                if ticket_id is None: # new ticket
+                    field = '0'
+                else:
+                    hours = '%.1f' % (self.get_total_hours(ticket_id) / 3600.0)
+                    field = tag.a(hours, href=req.href('hours', data['ticket'].id),
+                                  title="hours for ticket %s" % data['ticket'].id)
+                totalhours['rendered'] = field
+                stream |= Transformer("//input[@id='field-totalhours']").replace(field)
 
         return stream
 
