@@ -1013,31 +1013,25 @@ class TracHoursPlugin(Component):
         try:
             seconds_worked = int(float(hours) * 3600 + float(minutes) * 60)
         except ValueError:
-            # XXX handle better
-            raise ValueError("Please enter a valid number of hours")
-            req.redirect(req.href(req.path_info))
+            add_warning(req, _("Please enter a valid number of hours"))
+        else:
+            comments = req.args.get('comments', '').strip()
 
-        # comments on hours event
-        comments = req.args.get('comments', '').strip()
+            self.add_ticket_hours(ticket.id, worker, seconds_worked,
+                                  submitter=logged_in_user, time_started=started,
+                                  comments=comments)
+            if comments:
+                comment = "[%s %s\thours] logged for %s: ''%s''"\
+                          % ('/hours/%s' % ticket.id,
+                             self.format_hours(seconds_worked),
+                             worker, comments)
 
-        # add the hours
-        self.add_ticket_hours(ticket.id, worker, seconds_worked,
-                              submitter=logged_in_user, time_started=started,
-                              comments=comments)
+                # avoid adding hours that are (erroneously) noted in the comments
+                # see #4791
+                comment = comment.replace(' ', '\t')
 
-        # if comments are made, anote the ticket
-        if comments:
-            comment = "[%s %s\thours] logged for %s: ''%s''" % ('/hours/%s' % ticket.id,
-                                                           self.format_hours(seconds_worked),
-                                                           worker,
-                                                           comments)
-
-            # avoid adding hours that are (erroneously) noted in the comments
-            # see #4791
-            comment = comment.replace(' ', '\t')
-
-            ticket.save_changes(logged_in_user, comment)
-            # index = len(ticket.get_changelog()) - 1 # XXX can/should this be used?
+                ticket.save_changes(logged_in_user, comment)
+                # index = len(ticket.get_changelog()) - 1 # XXX can/should this be used?
 
         location = req.environ.get('HTTP_REFERER', req.href(req.path_info))
         req.redirect(location)
