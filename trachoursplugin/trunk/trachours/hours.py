@@ -968,7 +968,7 @@ class TracHoursPlugin(Component):
         for groupname, results in data['groups']:
             if groupname:
                 writer.writerow(unicode(groupname))
-            writer.writerow([unicode(header['label'])
+            writer.writerow([unicode(header['label']).encode('utf-8')
                              for header in data['headers']])
             for result in results:
                 row = []
