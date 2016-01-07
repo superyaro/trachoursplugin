@@ -45,9 +45,8 @@
             </tbody>
           </table>
           <b>Total:</b> ${total} hours
-          <py:if test="ticket['estimatedhours']"><b>Estimated:</b> ${ticket['estimatedhours']} hours<br />
-            <input py:if="can_add_hours" type="submit" name="edithours" value="Apply Changes"/>
-          </py:if>
+          <b>Estimated:</b> ${ticket and ticket['estimatedhours'] or 0} hours<br />
+          <input py:if="can_add_hours" type="submit" name="edithours" value="Apply Changes" />
         </form>
       </div>
 
