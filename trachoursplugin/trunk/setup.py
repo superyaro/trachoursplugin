@@ -27,7 +27,7 @@ setup(name='TracHoursPlugin',
       package_data={'trachours': ['templates/*']},
       zip_safe=False,
       install_requires=[
-          'Trac >= 0.12',
+          'Trac',
           'python-dateutil',
           'FeedParser',
           'ComponentDependencyPlugin',
