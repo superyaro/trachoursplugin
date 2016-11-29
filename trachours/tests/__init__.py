@@ -6,11 +6,18 @@
 # you should have received as part of this distribution.
 #
 
-from unittest import TestSuite
+import unittest
+
+
+def revert_trachours_schema_init(env):
+    with env.db_transaction as db:
+        db("DROP TABLE IF EXISTS ticket_time")
+        db("DROP TABLE IF EXISTS ticket_time_query")
+        db("DELETE FROM system WHERE name='trachours.db_version'")
 
 
 def test_suite():
-    suite = TestSuite()
+    suite = unittest.TestSuite()
 
     import trachours.tests.hours
     suite.addTest(trachours.tests.hours.test_suite())
@@ -20,8 +27,5 @@ def test_suite():
     return suite
 
 
-def revert_trachours_schema_init(db):
-    cursor = db.cursor()
-    cursor.execute("DROP TABLE IF EXISTS ticket_time")
-    cursor.execute("DROP TABLE IF EXISTS ticket_time_query")
-    cursor.execute("DELETE FROM system WHERE name='trachours.db_version'")
+if __name__ == '__main__':
+    unittest.main(defaultTest='test_suite')
