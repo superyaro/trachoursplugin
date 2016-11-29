@@ -76,11 +76,9 @@ class TracHoursRoadmapFilter(Component):
                 hours[milestone.name] = dict(totalhours=0.,
                                              estimatedhours=0.,)
 
-                db = self.env.get_db_cnx()
-                cursor = db.cursor()
-                cursor.execute("select id from ticket where milestone=%s",
-                               (milestone.name,))
-                tickets = [i[0] for i in cursor.fetchall()]
+                tickets = [tid for tid, in self.env.db_query("""
+                    SELECT id FROM ticket WHERE milestone=%s
+                    """, (milestone.name,))]
 
                 if tickets:
                     hours[milestone.name]['date'] = \

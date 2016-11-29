@@ -28,12 +28,13 @@ class HoursTicketManipulatorTestCase(unittest.TestCase):
                                    enable=['trac.*', 'trachours.*'])
         self.env.path = tempfile.mkdtemp()
         setup = SetupTracHours(self.env)
-        setup.upgrade_environment(db=self.env.get_db_cnx())
+        with self.env.db_transaction as db:
+            setup.upgrade_environment(db=db)
         self.hours_thp = TracHoursPlugin(self.env)
 
     def tearDown(self):
         self.env.reset_db()
-        revert_trachours_schema_init(db=self.env.get_db_cnx())
+        revert_trachours_schema_init(self.env)
         shutil.rmtree(self.env.path)
 
     def test_add_ticket_hours(self):
