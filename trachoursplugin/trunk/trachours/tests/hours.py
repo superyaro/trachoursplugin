@@ -22,7 +22,6 @@ from trachours.tests import revert_trachours_schema_init
 
 
 class HoursTicketManipulatorTestCase(unittest.TestCase):
-
     def setUp(self):
         self.env = EnvironmentStub(default_data=True,
                                    enable=['trac.*', 'trachours.*'])
@@ -41,7 +40,7 @@ class HoursTicketManipulatorTestCase(unittest.TestCase):
         tid = 1
         worker = 'joe'
         seconds_worked = 120
-        #when = datetime.now(utc)
+        # when = datetime.now(utc)
         when = datetime.now()
         comment = "joe's hours"
         self.hours_thp.add_ticket_hours(tid, worker, seconds_worked, None,
@@ -53,7 +52,7 @@ class HoursTicketManipulatorTestCase(unittest.TestCase):
         self.assertEqual(seconds_worked, hours[0]['seconds_worked'])
         self.assertEqual(worker, hours[0]['submitter'])
         # FIXME: See FIXME in add_ticket_hours
-        #self.assertEqual(to_timestamp(when), hours[0]['time_started'])
+        # self.assertEqual(to_timestamp(when), hours[0]['time_started'])
         self.assertEqual(comment, hours[0]['comments'])
 
     def test_delete_ticket_hours(self):
@@ -67,7 +66,8 @@ class HoursTicketManipulatorTestCase(unittest.TestCase):
     def test_prepare_ticket_exists(self):
         req = ticket = fields = actions = {}
         self.assertEquals(None,
-            self.hours_thp.prepare_ticket(req, ticket, fields, actions))
+                          self.hours_thp.prepare_ticket(req, ticket, fields,
+                                                        actions))
 
     def test_validate_ticket_negativevalue_returnstuple(self):
         req = {}
@@ -75,14 +75,16 @@ class HoursTicketManipulatorTestCase(unittest.TestCase):
         ticket['estimatedhours'] = '-1'
         self.assertTrue(ticket.get_value_or_default('estimatedhours'))
         msg = _("Please enter a positive value for Estimated Hours")
-        self.assertEquals(msg, self.hours_thp.validate_ticket(req, ticket)[0][1])
+        self.assertEquals(msg,
+                          self.hours_thp.validate_ticket(req, ticket)[0][1])
 
     def test_validate_ticket_notanumber_returnstuple(self):
         req = {}
         ticket = Ticket(self.env)
         ticket['estimatedhours'] = 'a'
         msg = _("Please enter a number for Estimated Hours")
-        self.assertEquals(msg, self.hours_thp.validate_ticket(req, ticket)[0][1])
+        self.assertEquals(msg,
+                          self.hours_thp.validate_ticket(req, ticket)[0][1])
 
     def test_validate_ticket_empty_setstozero(self):
         req = {}
@@ -96,14 +98,17 @@ class HoursTicketManipulatorTestCase(unittest.TestCase):
         self.env.config.remove('ticket-custom', 'estimatedhours')
         self.env.config.save()
         ticket = Ticket(self.env)
-        msg = _("""The field is not defined. Please check your configuration.""")
-        self.assertEquals(msg, self.hours_thp.validate_ticket(req, ticket)[0][1])
+        msg = _(
+            """The field is not defined. Please check your configuration.""")
+        self.assertEquals(msg,
+                          self.hours_thp.validate_ticket(req, ticket)[0][1])
 
 
 def test_suite():
     suite = unittest.TestSuite()
     suite.addTest(unittest.makeSuite(HoursTicketManipulatorTestCase, 'test'))
     return suite
+
 
 if __name__ == '__main__':
     unittest.main(defaultTest='test_suite')

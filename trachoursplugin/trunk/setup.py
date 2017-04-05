@@ -12,14 +12,14 @@ from setuptools import find_packages, setup
 
 version = '0.6.0'
 
-setup(name='TracHoursPlugin',
+setup(name='TracHours',
       version=version,
       description="Trac the estimated and actual hours spent on tickets",
       author="David Turner and Jeff Hammel",
       author_email="jhammel@openplans.org",
       maintainer="Ryan J Ollos",
       maintainer_email="ryan.j.ollos@gmail.com",
-      url='http://trac-hacks.org/wiki/TracHoursPlugin',
+      url='https://trac-hacks.org/wiki/TracHoursPlugin',
       keywords='trac plugin',
       license='3-Clause BSD',
       packages=find_packages(exclude=['*.tests']),
@@ -35,9 +35,9 @@ setup(name='TracHoursPlugin',
           'TracSQLHelper'
       ],
       dependency_links=[
-          'http://trac-hacks.org/svn/componentdependencyplugin/0.11#egg=ComponentDependencyPlugin',
-          'http://trac-hacks.org/svn/ticketsidebarproviderplugin/0.11#egg=TicketSidebarProvider',
-          'http://trac-hacks.org/svn/tracsqlhelperscript/0.12#egg=TracSQLHelper',
+          'https://trac-hacks.org/svn/componentdependencyplugin/0.11#egg=ComponentDependencyPlugin',
+          'https://trac-hacks.org/svn/ticketsidebarproviderplugin/0.11#egg=TicketSidebarProvider',
+          'https://trac-hacks.org/svn/tracsqlhelperscript/0.12#egg=TracSQLHelper',
       ],
       extras_require=dict(lxml=['lxml']),
       entry_points="""

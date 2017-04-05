@@ -7,7 +7,7 @@
 # you should have received as part of this distribution.
 #
 
-from trac.core import *
+from trac.core import Component, implements
 from trac.perm import PermissionCache
 from trac.ticket.api import ITicketChangeListener, ITicketManipulator
 
@@ -21,7 +21,7 @@ try:
     from mail2trac.interface import IEmailHandler
     from mail2trac.utils import emailaddr2user
 except ImportError:
-    IEmailHandler = None
+    ReplyToTicket = IEmailHandler = emailaddr2user = None
 
 
 class TracHoursByComment(Component):

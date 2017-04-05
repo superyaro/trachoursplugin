@@ -13,9 +13,9 @@ import feedparser
 import os
 import urllib2
 
-from genshi.builder import tag
-from trac.core import *
+from trac.core import Component, implements
 from trac.env import open_environment
+from trac.util.html import html as tag
 from trac.web.api import IRequestHandler
 from trac.web.href import Href
 
@@ -24,9 +24,10 @@ from trachours.utils import get_date, hours_format, urljoin
 
 try:
     import lxml.html
+
     def projects_from_url(url):
         """returns list of projects from the index url"""
-        projects = [] # XXX should be a set?
+        projects = []  # XXX should be a set?
         html = urllib2.urlopen(url).read()
         html = lxml.html.fromstring(html)
         for link in html.iterlinks():
@@ -85,11 +86,10 @@ def query_from_url(url, path='/hours?format=rss', directory=None):
             projects.add(project)
 
     projects = sorted(projects)
-    rows = [ ]
-    rows.append(['worker'] + projects + ['total'])
+    rows = [['worker'] + projects + ['total']]
     for worker in sorted(project_hours):
-        row = [ worker ]
-        total = 0.;
+        row = [worker]
+        total = 0.
         for project in projects:
             value = project_hours[worker].get(project, 0.)
             row.append(value)
@@ -100,12 +100,9 @@ def query_from_url(url, path='/hours?format=rss', directory=None):
 
 
 class MultiprojectHours(Component):
-
     implements(IRequestHandler)
 
-    ### methods for IRequestHandler
-
-    """Extension point interface for request handlers."""
+    # IRequestHandler methods
 
     def match_request(self, req):
         """Return whether the handler wants to process the given request."""
@@ -113,14 +110,14 @@ class MultiprojectHours(Component):
 
     def process_request(self, req):
         """Process the request. For ClearSilver, return a (template_name,
-        content_type) tuple, where `template` is the ClearSilver template to use
-        (either a `neo_cs.CS` object, or the file name of the template), and
-        `content_type` is the MIME type of the content. For Genshi, return a
-        (template_name, data, content_type) tuple, where `data` is a dictionary
-        of substitutions for the template.
+        content_type) tuple, where `template` is the ClearSilver template to 
+        use (either a `neo_cs.CS` object, or the file name of the template), 
+        and `content_type` is the MIME type of the content. For Genshi, 
+        return a (template_name, data, content_type) tuple, where `data` is a 
+        dictionary of substitutions for the template.
 
-        For both templating systems, "text/html" is assumed if `content_type` is
-        `None`.
+        For both templating systems, "text/html" is assumed if `content_type` 
+        is `None`.
 
         Note that if template processing should not occur, this method can
         simply send the response itself and not return anything.
@@ -130,7 +127,7 @@ class MultiprojectHours(Component):
         now = datetime.datetime.now()
 
         # XXX copy + pasted from hours.py
-        data['months'] = [ (i, calendar.month_name[i]) for i in range(1,13) ]
+        data['months'] = [(i, calendar.month_name[i]) for i in range(1, 13)]
         data['years'] = range(now.year, now.year - 10, -1)
         data['days'] = range(1, 32)
 
@@ -142,13 +139,14 @@ class MultiprojectHours(Component):
 
         else:
             from_date = datetime.datetime(now.year, now.month, now.day)
-            from_date = from_date - datetime.timedelta(days=7) # 1 week ago, by default
+            from_date = from_date - datetime.timedelta(
+                days=7)  # 1 week ago, by default
 
         if 'to_year' in req.args:
             to_date = get_date(req.args['to_year'],
-                                 req.args.get('to_month'),
-                                 req.args.get('to_day'),
-                                 end_of_day=True)
+                               req.args.get('to_month'),
+                               req.args.get('to_day'),
+                               end_of_day=True)
         else:
             to_date = now
 
@@ -156,10 +154,11 @@ class MultiprojectHours(Component):
         data['to_date'] = to_date
 
         # get the data from the projects
-        url = req.abs_href().rstrip('/').rsplit('/', 1)[0] # url for all projects
+        url = req.abs_href().rstrip('/').rsplit('/', 1)[0]
         for string in 'from', 'to':
             for field in 'year', 'month', 'day':
-                req.args['%s_%s' % (string, field)] = getattr(data['%s_date' % string], field)
+                req.args['%s_%s' % (string, field)] = getattr(
+                    data['%s_date' % string], field)
         kw = req.args.copy()
         kw['format'] = 'rss'
         path = Href('/hours')(**kw)
@@ -188,14 +187,17 @@ class MultiprojectHours(Component):
             kw = req.args.copy()
             kw['worker'] = worker
             url = req.href(req.path_info, **kw)
-            row[0] = tag.a(worker, href=url, title="Cross-project hours for %s" % worker)
+            row[0] = tag.a(worker, href=url,
+                           title="Cross-project hours for %s" % worker)
             project_urls = []
             for index, project in enumerate(data['projects']):
                 kw = req.args.copy()
                 kw['worker_filter'] = worker
                 url = Href('/%s' % project)('hours', **kw)
-                hours = hours_format % row[index+1]
-                project_urls.append(tag.a(hours, href=url, title="Hours for %s on %s" % (worker, project)))
+                hours = hours_format % row[index + 1]
+                project_urls.append(tag.a(hours, href=url,
+                                          title="Hours for %s on %s"
+                                                % (worker, project)))
             row[1:-1] = project_urls
             total += row[-1]
             row[-1] = hours_format % row[-1]
@@ -208,6 +210,7 @@ class MultiprojectHours(Component):
 if __name__ == '__main__':
     from optparse import OptionParser
     from pprint import pprint
+
     parser = OptionParser()
     options, args = parser.parse_args()
     for url in args:

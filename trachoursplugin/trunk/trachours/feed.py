@@ -7,6 +7,7 @@
 # you should have received as part of this distribution.
 #
 
+
 def total_hours(feed):
     """return a dictionary in the form of {worker: hours_worked}"""
     hours_dict = {}
@@ -16,7 +17,7 @@ def total_hours(feed):
         title = entry.title
         split = title.split()
         hours, minutes = split[0].split(':')
-        time_worked = float(hours) + float(minutes)/60. # in hours
+        time_worked = float(hours) + float(minutes) / 60.  # in hours
         worker = split[-1]
         hours_dict.setdefault(worker, 0)
         hours_dict[worker] += time_worked

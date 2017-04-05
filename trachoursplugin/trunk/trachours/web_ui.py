@@ -14,13 +14,13 @@ import time
 from StringIO import StringIO
 from pkg_resources import parse_version
 
-from genshi.builder import tag
 from genshi.filters import Transformer
 from genshi.filters.transform import StreamBuffer
 from trac import __version__ as TRAC_VERSION
 from trac.core import *
 from trac.ticket import Ticket
 from trac.ticket.model import Milestone
+from trac.util.html import html as tag
 from trac.util.translation import _
 from trac.web.api import IRequestHandler, ITemplateStreamFilter
 from trac.web.chrome import (
@@ -36,7 +36,6 @@ from utils import get_date, hours_format
 
 
 class TracHoursRoadmapFilter(Component):
-
     implements(IRequireComponents, ITemplateStreamFilter)
 
     # IRequireComponents methods
@@ -53,7 +52,7 @@ class TracHoursRoadmapFilter(Component):
         """
 
         if filename in ('roadmap.html', 'milestone_view.html') and \
-                'TICKET_VIEW_HOURS' in req.perm:
+                        'TICKET_VIEW_HOURS' in req.perm:
             trac_hours = TracHoursPlugin(self.env)
 
             hours = {}
@@ -74,7 +73,7 @@ class TracHoursRoadmapFilter(Component):
 
             for milestone in milestones:
                 hours[milestone.name] = dict(totalhours=0.,
-                                             estimatedhours=0.,)
+                                             estimatedhours=0., )
 
                 tickets = [tid for tid, in self.env.db_query("""
                     SELECT id FROM ticket WHERE milestone=%s
@@ -82,7 +81,7 @@ class TracHoursRoadmapFilter(Component):
 
                 if tickets:
                     hours[milestone.name]['date'] = \
-                        Ticket(self.env, tickets[0]).time_created
+                        Ticket(self.env, tickets[0])['created']
                 for ticket in tickets:
                     ticket = Ticket(self.env, ticket)
 
@@ -94,21 +93,24 @@ class TracHoursRoadmapFilter(Component):
                     hours[milestone.name]['estimatedhours'] += estimated_hours
 
                     # total hours for the ticket (seconds -> hours)
-                    total_hours = trac_hours.get_total_hours(ticket.id) / 3600.0
+                    total_hours = trac_hours.get_total_hours(
+                        ticket.id) / 3600.0
                     hours[milestone.name]['totalhours'] += total_hours
 
                     # update date for oldest ticket
-                    if ticket.time_created < hours[milestone.name]['date']:
-                        hours[milestone.name]['date'] = ticket.time_created
+                    if ticket['created'] < hours[milestone.name]['date']:
+                        hours[milestone.name]['date'] = ticket['created']
 
             b = StreamBuffer()
             stream |= Transformer(find_xpath).copy(b).end().select(xpath). \
-                append(self.MilestoneMarkup(b, hours, req.href, this_milestone))
+                append(
+                self.MilestoneMarkup(b, hours, req.href, this_milestone))
 
         return stream
 
     class MilestoneMarkup(object):
         """Iterator for Transformer markup injection"""
+
         def __init__(self, buffer, hours, href, this_milestone):
             self.buffer = buffer
             self.hours = hours
@@ -120,7 +122,7 @@ class TracHoursRoadmapFilter(Component):
                 milestone = self.this_milestone
             else:
                 milestone = self.buffer.events[3][1]
-            if not milestone in self.hours.keys():
+            if milestone not in self.hours.keys():
                 return iter([])
             hours = self.hours[milestone]
             estimated_hours = hours['estimatedhours']
@@ -143,7 +145,8 @@ class TracHoursRoadmapFilter(Component):
                              from_day=date.day)
             if parse_version(TRAC_VERSION) < parse_version('1.0'):
                 items.append(tag.dt(tag.a("Total Hours:", href=link)))
-                items.append(tag.dd(tag.a(hours_format % total_hours, href=link)))
+                items.append(
+                    tag.dd(tag.a(hours_format % total_hours, href=link)))
                 return iter(tag.dl(*items))
             else:
                 items.append(tag.span(tag.a(_("Total Hours: "),
@@ -154,7 +157,6 @@ class TracHoursRoadmapFilter(Component):
 
 
 class TracHoursSidebarProvider(Component):
-
     implements(ITicketSidebarProvider, IRequireComponents)
 
     # IRequireComponents methods
@@ -173,7 +175,7 @@ class TracHoursSidebarProvider(Component):
         data = {'worker': req.authname,
                 'action': req.href('hours', ticket.id)}
         return Chrome(self.env). \
-               load_template('hours_sidebar.html').generate(**data)
+            load_template('hours_sidebar.html').generate(**data)
 
     # ITemplateProvider methods
 
@@ -186,7 +188,6 @@ class TracHoursSidebarProvider(Component):
 
 
 class TracUserHours(Component):
-
     implements(IRequireComponents, ITemplateProvider, IRequestHandler)
 
     # IRequireComponents methods
@@ -261,19 +262,19 @@ class TracUserHours(Component):
     def users(self, req):
         """hours for all users"""
 
-        data = {'hours_format':  hours_format}
+        data = {'hours_format': hours_format}
 
-        ### date data
+        # date data
         self.date_data(req, data)
 
-        ### milestone data
+        # milestone data
         milestone = req.args.get('milestone')
         milestones = Milestone.select(self.env)
         data['milestones'] = milestones
 
-        ### get the hours
-        #trachours = TracHoursPlugin(self.env)
-        #tickets = trachours.tickets_with_hours()
+        # get the hours
+        # trachours = TracHoursPlugin(self.env)
+        # tickets = trachours.tickets_with_hours()
         hours = get_all_dict(self.env, """
             SELECT * FROM ticket_time
             WHERE time_started >= %s AND time_started < %s
@@ -291,7 +292,7 @@ class TracUserHours(Component):
 
             worker_hours[worker] += entry['seconds_worked']
 
-        worker_hours = [(worker, seconds/3600.)
+        worker_hours = [(worker, seconds / 3600.)
                         for worker, seconds in
                         sorted(worker_hours.items())]
         data['worker_hours'] = worker_hours
@@ -299,17 +300,17 @@ class TracUserHours(Component):
         if req.args.get('format') == 'csv':
             req.send(self.export_csv(req, data))
 
-        #add_link(req, 'prev', self.get_href(query, args, context.href),
+        # add_link(req, 'prev', self.get_href(query, args, context.href),
         #         _('Prev Week'))
-        #add_link(req, 'next', self.get_href(query, args, context.href),
+        # add_link(req, 'next', self.get_href(query, args, context.href),
         #         _('Next Week'))
-        #prevnext_nav(req, _('Prev Week'), _('Next Week'))
+        # prevnext_nav(req, _('Prev Week'), _('Next Week'))
 
         return 'hours_users.html', data, "text/html"
 
     def user(self, req, user):
         """hours page for a single user"""
-        data = {'hours_format':  hours_format,
+        data = {'hours_format': hours_format,
                 'worker': user}
         self.date_data(req, data)
         args = [user]
@@ -330,7 +331,7 @@ class TracUserHours(Component):
                                 for i in worker_hours.keys()])
 
         # sort by ticket number and convert to hours
-        worker_hours = [(ticket_id, seconds/3600.)
+        worker_hours = [(ticket_id, seconds / 3600.)
                         for ticket_id, seconds in
                         sorted(worker_hours.items())]
 
