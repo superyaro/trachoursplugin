@@ -22,7 +22,6 @@ from trachours.tests import revert_trachours_schema_init
 
 
 class TracHoursByCommentTestCase(unittest.TestCase):
-
     def setUp(self):
         self.env = EnvironmentStub(default_data=True,
                                    enable=['trac.*', 'trachours.*'])
@@ -56,6 +55,7 @@ def test_suite():
     suite = unittest.TestSuite()
     suite.addTest(unittest.makeSuite(TracHoursByCommentTestCase, 'test'))
     return suite
+
 
 if __name__ == '__main__':
     unittest.main(defaultTest='test_suite')
