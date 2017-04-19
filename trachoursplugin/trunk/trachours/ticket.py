@@ -37,7 +37,7 @@ class TracHoursByComment(Component):
     hours_regex = r'(([0-9]+(\.[0-9]+)?)|([0-9]+:[0-5][0-9])) *hours'
 
     # for singular hours: 1 hour
-    singular_hour_regex = r'((^)|(\s))1 *hour((\W)|($))'
+    singular_hour_regex = r'((^)|(\s*))1 *hour((\W)|($))'
 
     # IRequireComponents methods
 
