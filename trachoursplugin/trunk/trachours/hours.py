@@ -82,7 +82,7 @@ class TracHoursPlugin(Component):
         * ids: ticket ids (list)
         """
         results = get_all_dict(self.env, """
-            SELECT SUM(seconds_worked) AS t, ticket 
+            SELECT SUM(seconds_worked) AS t, ticket
             FROM ticket_time WHERE ticket IN (%s) GROUP BY ticket
             """ % ",".join(map(str, ids)))
 
@@ -131,7 +131,7 @@ class TracHoursPlugin(Component):
             args.append(worker_filter)
 
         return get_all_dict(self.env, """
-            SELECT * FROM ticket_time WHERE %s 
+            SELECT * FROM ticket_time WHERE %s
             """ % where, *args)
 
     def get_total_hours(self, ticket_id):
@@ -147,7 +147,7 @@ class TracHoursPlugin(Component):
         * worker : who did the work on the ticket
         * seconds_worked : how much work was done, in seconds
         * submitter : who recorded the work, if different from the worker
-        * time_started : when the work was begun (a Datetime object) if other 
+        * time_started : when the work was begun (a Datetime object) if other
                          than now
         * comments : comments to record
         """
@@ -255,8 +255,8 @@ class TracHoursPlugin(Component):
         """Validate a ticket after it's been populated from user input.
 
         Must return a list of `(field, message)` tuples, one for each problem
-        detected. `field` can be `None` to indicate an overall problem with 
-        the ticket. Therefore, a return value of `[]` means everything 
+        detected. `field` can be `None` to indicate an overall problem with
+        the ticket. Therefore, a return value of `[]` means everything
         is OK.
         """
 
@@ -351,7 +351,7 @@ class TracHoursPlugin(Component):
             if id_:
                 # save over an existing query
                 execute_non_query(self.env, """
-                    UPDATE ticket_time_query SET title = %s, description = %s, 
+                    UPDATE ticket_time_query SET title = %s, description = %s,
                     QUERY = %s WHERE id = %s
                     """, req.args['title'], req.args['description'],
                     req.args['query'], id_)
