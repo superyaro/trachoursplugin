@@ -527,8 +527,9 @@ class TracHoursPlugin(Component):
 
     def get_href(self, query, args, *a, **kw):
         base = query.get_href(*a, **kw)
-        cols = args.getlist('col')
         if cols:
+            if isinstance(cols, basestring):
+                cols = [cols]
             base += '&' + "&".join("col=%s" % col
                                    for col in cols if col not in query.cols)
 
