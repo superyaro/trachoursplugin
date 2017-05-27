@@ -81,7 +81,7 @@ class TracHoursRoadmapFilter(Component):
 
                 if tickets:
                     hours[milestone.name]['date'] = \
-                        Ticket(self.env, tickets[0])['created']
+                        Ticket(self.env, tickets[0])['time']
                 for ticket in tickets:
                     ticket = Ticket(self.env, ticket)
 
@@ -98,8 +98,8 @@ class TracHoursRoadmapFilter(Component):
                     hours[milestone.name]['totalhours'] += total_hours
 
                     # update date for oldest ticket
-                    if ticket['created'] < hours[milestone.name]['date']:
-                        hours[milestone.name]['date'] = ticket['created']
+                    if ticket['time'] < hours[milestone.name]['date']:
+                        hours[milestone.name]['date'] = ticket['time']
 
             b = StreamBuffer()
             stream |= Transformer(find_xpath).copy(b).end().select(xpath). \
