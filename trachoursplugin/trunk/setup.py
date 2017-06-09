@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 #
 # Copyright (C) 2009 Jeff Hammel <jhammel@openplans.org>
+# Copyright (C) 2017 Emerson Castaneda <emecas@gmail.com>
 # All rights reserved.
 #
 # This software is licensed as described in the file COPYING, which
@@ -10,7 +11,7 @@
 
 from setuptools import find_packages, setup
 
-version = '0.6.0'
+version = '0.7.0'
 
 setup(name='TracHours',
       version=version,
@@ -37,7 +38,7 @@ setup(name='TracHours',
       dependency_links=[
           'https://trac-hacks.org/svn/componentdependencyplugin/0.11#egg=ComponentDependencyPlugin',
           'https://trac-hacks.org/svn/ticketsidebarproviderplugin/0.11#egg=TicketSidebarProvider',
-          'https://trac-hacks.org/svn/tracsqlhelperscript/0.12#egg=TracSQLHelper',
+          'https://trac-hacks.org/svn/tracsqlhelperscript/1.2#egg=TracSQLHelper',
       ],
       extras_require=dict(lxml=['lxml']),
       entry_points="""

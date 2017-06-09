@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 #
 # Copyright (C) 2009 Jeff Hammel <jhammel@openplans.org>
+# Copyright (C) 2017 Emerson Castaneda <emecas@gmail.com>
 # All rights reserved.
 #
 # This software is licensed as described in the file COPYING, which
@@ -10,6 +11,18 @@
 from trac.core import Component, implements
 from trac.db.schema import Column, Index, Table
 from trac.env import IEnvironmentSetupParticipant
+
+from trac.util.datefmt import to_utimestamp, utc
+from datetime import datetime
+
+from usermanual import *
+
+#try:
+#    from xmlrpc import *
+#except:
+#    pass
+
+
 
 from tracsqlhelper import *
 
@@ -33,13 +46,22 @@ class SetupTracHours(Component):
 
     # IEnvironmentSetupParticipant methods
 
+    db_installed_version = None
+    db_version = 4
+
+
+    def __init__(self):
+        self.db_installed_version =  self.version()
+
     def environment_created(self):
         if self.environment_needs_upgrade():
             self.upgrade_environment()
 
-    def environment_needs_upgrade(self, db=None):
-        version = self.version()
-        return version < len(self.steps)
+    def environment_needs_upgrade(self, db):
+        return self._system_needs_upgrade()
+
+    def _system_needs_upgrade(self):
+        return self.db_installed_version < self.db_version
 
     def upgrade_environment(self, db=None):
         for version in range(self.version(), len(self.steps)):
@@ -48,6 +70,30 @@ class SetupTracHours(Component):
         execute_non_query(self.env, """
             UPDATE system SET value='%s' WHERE name='trachours.db_version'
             """ % len(self.steps))
+
+    def _needs_user_man(self):
+        for maxversion, in get_all_dict(self.env, """
+                SELECT MAX(version) FROM wiki WHERE name=%s
+                """, user_manual_wiki_title):
+            maxversion = int(maxversion) if   isinstance( maxversion, ( int, long ) ) else 0
+            break
+        else:
+            maxversion = 0
+
+        return maxversion < user_manual_version
+
+
+    def _do_user_man_update(self):
+        when = to_utimestamp(datetime.now(utc))
+
+        execute_non_query(self.env, """
+                    INSERT INTO wiki
+                  (name,version,time,author,ipnr,text,comment,readonly)
+                VALUES (%s,%s,%s,%s,%s,%s,%s,%s)
+                """, user_manual_wiki_title, user_manual_version,
+                      when, 'TracHours Plugin', '127.0.0.1',
+                      user_manual_content, '', 0)
+
 
     def version(self):
         """returns version of the database (an int)"""
@@ -104,9 +150,15 @@ class SetupTracHours(Component):
             SELECT id, 'totalhours', '0' FROM ticket WHERE id NOT IN (
             SELECT ticket FROM ticket_custom WHERE name='totalhours');""")
 
+    def install_manual(self):
+        if self._needs_user_man():
+            self._do_user_man_update()
+
+
     # ordered steps for upgrading
     steps = [
         [create_db, update_custom_fields],  # version 1
         [add_query_table],  # version 2
         [initialize_old_tickets],  # version 3
+        [install_manual], # version 4
     ]
