@@ -57,51 +57,62 @@ class SetupTracHours(Component):
         if self.environment_needs_upgrade():
             self.upgrade_environment()
 
-    def environment_needs_upgrade(self, db):
+    def environment_needs_upgrade(self):
         return self._system_needs_upgrade()
 
     def _system_needs_upgrade(self):
-        return self.db_installed_version < self.db_version
+       return self.db_installed_version < self.db_version
 
     def upgrade_environment(self, db=None):
         for version in range(self.version(), len(self.steps)):
             for step in self.steps[version]:
                 step(self)
-        execute_non_query(self.env, """
-            UPDATE system SET value='%s' WHERE name='trachours.db_version'
-            """ % len(self.steps))
 
-    def _needs_user_man(self):
-        for maxversion, in get_all_dict(self.env, """
+        cursor = db.cursor()
+        cursor.execute("""UPDATE system SET value='%s' WHERE name='trachours.db_version'""" % len(self.steps))
+
+        self.db_installed_version = len(self.steps)
+
+    def _needs_user_manual(self):
+        with self.env.db_transaction as db:
+            cursor = db.cursor()
+            cursor.execute("""
                 SELECT MAX(version) FROM wiki WHERE name=%s
-                """, user_manual_wiki_title):
-            maxversion = int(maxversion) if   isinstance( maxversion, ( int, long ) ) else 0
-            break
-        else:
-            maxversion = 0
+                   """, (user_manual_wiki_title,))
 
+            #rows = self.env.db_query("""
+            #        SELECT MAX(version) FROM wiki WHERE name=%s
+            #        """, (user_manual_wiki_title,)
+
+            for maxversion in cursor.fetchone():#dict(data=cursor.fetchall(), desc=cursor.description):
+                maxversion = int(maxversion) if isinstance( maxversion, ( int, long ) ) else 0
+                break
+            else:
+                maxversion = 0
         return maxversion < user_manual_version
 
 
     def _do_user_man_update(self):
         when = to_utimestamp(datetime.now(utc))
-
-        execute_non_query(self.env, """
+        with self.env.db_transaction as db:
+            cursor = db.cursor()
+            cursor.execute("""
                     INSERT INTO wiki
                   (name,version,time,author,ipnr,text,comment,readonly)
                 VALUES (%s,%s,%s,%s,%s,%s,%s,%s)
-                """, user_manual_wiki_title, user_manual_version,
+                """, (user_manual_wiki_title, user_manual_version,
                       when, 'TracHours Plugin', '127.0.0.1',
-                      user_manual_content, '', 0)
-
+                      user_manual_content, '', 0,))
 
     def version(self):
-        """returns version of the database (an int)"""
-        version = get_scalar(self.env, """
+        with self.env.db_transaction as db:
+            cursor = db.cursor()
+            cursor.execute("""
             SELECT value FROM system WHERE name = 'trachours.db_version'
             """)
+            version = cursor.fetchone()
         if version:
-            return int(version)
+            return int(version[0])
         return 0
 
     def create_db(self):
@@ -151,7 +162,7 @@ class SetupTracHours(Component):
             SELECT ticket FROM ticket_custom WHERE name='totalhours');""")
 
     def install_manual(self):
-        if self._needs_user_man():
+        if self._needs_user_manual():
             self._do_user_man_update()
 
 
