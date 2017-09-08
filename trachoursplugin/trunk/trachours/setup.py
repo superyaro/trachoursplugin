@@ -8,23 +8,15 @@
 # you should have received as part of this distribution.
 #
 
+from datetime import datetime
+
 from trac.core import Component, implements
 from trac.db.schema import Column, Index, Table
 from trac.env import IEnvironmentSetupParticipant
-
 from trac.util.datefmt import to_utimestamp, utc
-from datetime import datetime
+from tracsqlhelper import *
 
 from usermanual import *
-
-#try:
-#    from xmlrpc import *
-#except:
-#    pass
-
-
-
-from tracsqlhelper import *
 
 # totalhours be a computed field, but computed fields don't yet exist for trac
 custom_fields = {
@@ -49,27 +41,28 @@ class SetupTracHours(Component):
     db_installed_version = None
     db_version = 4
 
-
     def __init__(self):
-        self.db_installed_version =  self.version()
+        self.db_installed_version = self.version()
 
-    def environment_created(self):
+    def environment_created(self, db=None):
         if self.environment_needs_upgrade():
             self.upgrade_environment()
 
-    def environment_needs_upgrade(self):
+    def environment_needs_upgrade(self, db=None):
         return self._system_needs_upgrade()
 
     def _system_needs_upgrade(self):
-       return self.db_installed_version < self.db_version
+        return self.db_installed_version < self.db_version
 
     def upgrade_environment(self, db=None):
         for version in range(self.version(), len(self.steps)):
             for step in self.steps[version]:
                 step(self)
 
-        cursor = db.cursor()
-        cursor.execute("""UPDATE system SET value='%s' WHERE name='trachours.db_version'""" % len(self.steps))
+        self.env.db_transaction("""
+            UPDATE system SET value=%s
+            WHERE name='trachours.db_version'
+            """, (len(self.steps),))
 
         self.db_installed_version = len(self.steps)
 
@@ -84,13 +77,14 @@ class SetupTracHours(Component):
             #        SELECT MAX(version) FROM wiki WHERE name=%s
             #        """, (user_manual_wiki_title,)
 
-            for maxversion in cursor.fetchone():#dict(data=cursor.fetchall(), desc=cursor.description):
-                maxversion = int(maxversion) if isinstance( maxversion, ( int, long ) ) else 0
+            for maxversion in cursor.fetchone():
+                maxversion = int(maxversion) \
+                             if isinstance(maxversion, (int, long)) \
+                             else 0
                 break
             else:
                 maxversion = 0
         return maxversion < user_manual_version
-
 
     def _do_user_man_update(self):
         when = to_utimestamp(datetime.now(utc))
@@ -105,15 +99,12 @@ class SetupTracHours(Component):
                       user_manual_content, '', 0,))
 
     def version(self):
-        with self.env.db_transaction as db:
-            cursor = db.cursor()
-            cursor.execute("""
-            SELECT value FROM system WHERE name = 'trachours.db_version'
-            """)
-            version = cursor.fetchone()
-        if version:
-            return int(version[0])
-        return 0
+        for value, in self.env.db_query("""
+                SELECT value FROM system WHERE name = 'trachours.db_version'
+                """):
+            return value
+        else:
+            return 0
 
     def create_db(self):
         ticket_time_table = Table('ticket_time', key='id')[
@@ -131,7 +122,7 @@ class SetupTracHours(Component):
 
         create_table(self.env, ticket_time_table)
         execute_non_query(self.env, """
-            INSERT INTO system (name, value) 
+            INSERT INTO system (name, value)
             VALUES ('trachours.db_version', '1')
             """)
 
@@ -165,11 +156,10 @@ class SetupTracHours(Component):
         if self._needs_user_manual():
             self._do_user_man_update()
 
-
     # ordered steps for upgrading
     steps = [
         [create_db, update_custom_fields],  # version 1
         [add_query_table],  # version 2
         [initialize_old_tickets],  # version 3
-        [install_manual], # version 4
+        [install_manual],  # version 4
     ]
