@@ -73,14 +73,14 @@ class SetupTracHours(Component):
                 SELECT MAX(version) FROM wiki WHERE name=%s
                    """, (user_manual_wiki_title,))
 
-            #rows = self.env.db_query("""
+            # rows = self.env.db_query("""
             #        SELECT MAX(version) FROM wiki WHERE name=%s
             #        """, (user_manual_wiki_title,)
 
             for maxversion in cursor.fetchone():
                 maxversion = int(maxversion) \
-                             if isinstance(maxversion, (int, long)) \
-                             else 0
+                    if isinstance(maxversion, (int, long)) \
+                    else 0
                 break
             else:
                 maxversion = 0

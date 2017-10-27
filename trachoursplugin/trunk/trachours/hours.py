@@ -34,7 +34,7 @@ from trac.web.chrome import (
 from componentdependencies.interface import IRequireComponents
 from tracsqlhelper import *
 from multiproject import MultiprojectHours
-from setup import SetupTracHours
+from db import SetupTracHours
 from utils import get_all_users, get_date
 
 
@@ -54,7 +54,6 @@ def query_to_query_string(query):
 
 
 class TracHoursPlugin(Component):
-
     implements(INavigationContributor,
                IPermissionRequestor,
                IRequestHandler,
@@ -291,7 +290,7 @@ class TracHoursPlugin(Component):
 
         if filename == 'ticket.html' and 'TICKET_VIEW_HOURS' in req.perm:
             field = [field for field in data['fields']
-                           if field['name'] == 'totalhours']
+                     if field['name'] == 'totalhours']
             if field:
                 total_hours = field[0]
                 ticket_id = data['ticket'].id
@@ -354,7 +353,7 @@ class TracHoursPlugin(Component):
                     UPDATE ticket_time_query SET title = %s, description = %s,
                     QUERY = %s WHERE id = %s
                     """, req.args['title'], req.args['description'],
-                    req.args['query'], id_)
+                                  req.args['query'], id_)
 
             else:
                 # create a new query
@@ -362,7 +361,7 @@ class TracHoursPlugin(Component):
                     INSERT INTO ticket_time_query(title, description, query)
                     VALUES (%s, %s, %s)
                     """, req.args['title'], req.args['description'],
-                    req.args['query'])
+                                  req.args['query'])
                 # fixme: duplicate title?
                 id_ = get_scalar(self.env, """
                     SELECT id FROM ticket_time_query WHERE title = %s
@@ -598,7 +597,7 @@ class TracHoursPlugin(Component):
                 query_id = int(query_id)
             except ValueError:
                 add_warning(req, "query_id should be an integer, you put '%s'"
-                                 % query_id)
+                            % query_id)
                 query_id = None
         if query_id:
             data['query_id'] = query_id
