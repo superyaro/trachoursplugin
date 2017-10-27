@@ -28,8 +28,8 @@ def test_suite():
     suite.addTest(trachours.tests.hours.test_suite())
     import trachours.tests.ticket
     suite.addTest(trachours.tests.ticket.test_suite())
-    import trachours.tests.setup
-    suite.addTest(trachours.tests.setup.test_suite())
+    import trachours.tests.db
+    suite.addTest(trachours.tests.db.test_suite())
 
 
     return suite

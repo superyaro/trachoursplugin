@@ -16,7 +16,7 @@ from trac.ticket.model import Ticket
 from trac.util.translation import _
 
 from trachours.hours import TracHoursPlugin
-from trachours.setup import SetupTracHours
+from trachours.db import SetupTracHours
 
 from trachours.tests import revert_trachours_schema_init
 

@@ -11,7 +11,7 @@
 
 from setuptools import find_packages, setup
 
-version = '0.7.1'
+version = '0.7.2'
 
 setup(name='TracHours',
       version=version,
@@ -45,7 +45,7 @@ setup(name='TracHours',
           [trac.plugins]
           trachours.trachours = trachours.hours
           trachours.multiproject = trachours.multiproject
-          trachours.setup = trachours.setup
+          trachours.setup = trachours.db
           trachours.ticket = trachours.ticket
           trachours.web_ui = trachours.web_ui
       """,

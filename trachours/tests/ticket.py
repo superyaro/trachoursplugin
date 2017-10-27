@@ -15,7 +15,7 @@ from trac.ticket.api import TicketSystem
 from trac.ticket.model import Ticket
 
 from trachours.hours import TracHoursPlugin
-from trachours.setup import SetupTracHours
+from trachours.db import SetupTracHours
 from trachours.ticket import TracHoursByComment
 
 from trachours.tests import revert_trachours_schema_init
