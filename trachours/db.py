@@ -102,7 +102,7 @@ class SetupTracHours(Component):
         for value, in self.env.db_query("""
                 SELECT value FROM system WHERE name = 'trachours.db_version'
                 """):
-            return value
+            return int(value)
         else:
             return 0
 

@@ -11,7 +11,7 @@
 
 from setuptools import find_packages, setup
 
-version = '0.7.2'
+version = '0.7.3'
 
 setup(name='TracHours',
       version=version,
