@@ -110,13 +110,13 @@ class MultiprojectHours(Component):
 
     def process_request(self, req):
         """Process the request. For ClearSilver, return a (template_name,
-        content_type) tuple, where `template` is the ClearSilver template to 
-        use (either a `neo_cs.CS` object, or the file name of the template), 
-        and `content_type` is the MIME type of the content. For Genshi, 
-        return a (template_name, data, content_type) tuple, where `data` is a 
+        content_type) tuple, where `template` is the ClearSilver template to
+        use (either a `neo_cs.CS` object, or the file name of the template),
+        and `content_type` is the MIME type of the content. For Genshi,
+        return a (template_name, data, content_type) tuple, where `data` is a
         dictionary of substitutions for the template.
 
-        For both templating systems, "text/html" is assumed if `content_type` 
+        For both templating systems, "text/html" is assumed if `content_type`
         is `None`.
 
         Note that if template processing should not occur, this method can
