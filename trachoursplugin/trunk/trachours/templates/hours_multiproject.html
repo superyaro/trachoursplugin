@@ -19,7 +19,7 @@
 
     <!-- hours selection form -->
     <form id="query" method="get">
-      Hours from 
+      Hours from
       <select name="from_month">
         <option py:for="month in months" value="${month[0]}"
                 py:attrs="{'selected': month[0] == from_date.month or None}">
@@ -54,7 +54,7 @@
                 py:attrs="{'selected': year == to_date.year or None}">$year
         </option>
       </select>
-      
+
       <div class="buttons">
         <input type="submit" value="${_('Update')}"/>
       </div>

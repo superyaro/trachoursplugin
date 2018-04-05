@@ -9,7 +9,7 @@
     <lastBuildDate>${TODO} get the latest item</lastBuildDate>
     <docs>http://blogs.law.harvard.edu/tech/rss</docs>
     <generator>Trac</generator>
- 
+
     <item py:for="item in items">
       <title>${item['title']}</title>
       <link>${item['url']}</link>

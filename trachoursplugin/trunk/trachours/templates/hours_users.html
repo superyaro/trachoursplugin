@@ -14,15 +14,15 @@
     <script type="text/javascript" src="${chrome.htdocs_location}js/query.js"></script>
     <script type="text/javascript">
       jQuery(document).ready(function($) {
-      $("#group").change(function() {
-      $("#groupdesc").enable(this.selectedIndex != 0)
-      }).change();
-      $("fieldset legend.foldable").enableFolding(false);
-      /* Hide the filters for saved queries. */
-      if ( window.location.href.search(/[?&amp;]report=[0-9]+/) != -1 )
-      $("#filters").toggleClass("collapsed");
-      /* Hide the columns by default. */
-      $("#columns").toggleClass("collapsed");
+          $("#group").change(function() {
+          $("#groupdesc").enable(this.selectedIndex != 0)
+        }).change();
+        $("fieldset legend.foldable").enableFolding(false);
+        /* Hide the filters for saved queries. */
+        if ( window.location.href.search(/[?&amp;]report=[0-9]+/) != -1 )
+        $("#filters").toggleClass("collapsed");
+        /* Hide the columns by default. */
+        $("#columns").toggleClass("collapsed");
       });
     </script>
   </head>
@@ -30,7 +30,7 @@
   <body>
 
     <div id="content" class="query">
-      
+
       <h1>User Hours</h1>
 
       <form id="query" method="get" actions="">
@@ -78,12 +78,12 @@
         </select>
 
         <!-- milestone -->
-        <div py:if="milestones" 
+        <div py:if="milestones"
              py:with="selected_milestone=req.args.get('milestone')">
           <a href="${req.href('roadmap')}">Milestone</a>:
           <select name="milestone">
             <option value=""></option>
-            <option py:for="milestone in milestones" 
+            <option py:for="milestone in milestones"
                     py:attrs="{'selected': selected_milestone == milestone.name and True or None}"
                     value="${milestone.name}">
               ${milestone.name}

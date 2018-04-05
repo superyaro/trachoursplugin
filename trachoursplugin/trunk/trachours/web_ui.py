@@ -52,7 +52,7 @@ class TracHoursRoadmapFilter(Component):
         """
 
         if filename in ('roadmap.html', 'milestone_view.html') and \
-                        'TICKET_VIEW_HOURS' in req.perm:
+                'TICKET_VIEW_HOURS' in req.perm:
             trac_hours = TracHoursPlugin(self.env)
 
             hours = {}
@@ -293,8 +293,7 @@ class TracUserHours(Component):
             worker_hours[worker] += entry['seconds_worked']
 
         worker_hours = [(worker, seconds / 3600.)
-                        for worker, seconds in
-                        sorted(worker_hours.items())]
+                        for worker, seconds in sorted(worker_hours.items())]
         data['worker_hours'] = worker_hours
 
         if req.args.get('format') == 'csv':
@@ -336,7 +335,7 @@ class TracUserHours(Component):
                         sorted(worker_hours.items())]
 
         data['worker_hours'] = worker_hours
-        data['total_hours'] = sum([hours[1] for hours in worker_hours])
+        data['total_hours'] = sum(hours[1] for hours in worker_hours)
 
         if req.args.get('format') == 'csv':
             buffer = StringIO()
