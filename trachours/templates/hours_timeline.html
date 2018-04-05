@@ -117,12 +117,27 @@
                         <td class="filter" colspan="${field.type in ('radio', 'checkbox') and 2 or None}"
                             py:choose="field.type">
 
+                        <py:def function="render_options(field_name, options)"
+                                py:choose="field_name">
+                          <option py:when="'owner'"
+                                  py:for="option in options"
+                                  selected="${option.value == constraint_value or None}"
+                                  value="$option.value" py:content="option.name"></option>
+                          <option py:otherwise=""
+                                  py:for="option in options"
+                                  selected="${option == constraint_value or None}"
+                                  value="$option" py:content="option"></option>
+                        </py:def>
+
                           <py:when test="'select'">
                             <select name="${constraint_name}">
                               <option></option>
-                              <option py:for="option in field.options"
-                                      selected="${option == constraint_value and 'selected' or None}">$option
-                              </option>
+                              ${render_options(field.name, field.options)}
+                              <optgroup py:for="optgroup in field.optgroups"
+                                        py:if="optgroup.options"
+                                        label="${optgroup.label}">
+                                ${render_options(field.name, optgroup.options)}
+                              </optgroup>
                             </select>
                           </py:when>
 
