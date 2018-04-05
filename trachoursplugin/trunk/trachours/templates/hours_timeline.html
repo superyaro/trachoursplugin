@@ -43,7 +43,8 @@
         <p>${query_description}</p>
       </div>
 
-      <form id="query" method="get">
+      <form id="query" method="get"
+            py:with="field_names = sorted(fields.iterkeys(), key=lambda name: fields[name].label.lower())">
         Hours from
         <!-- date + worker selection -->
         <select name="from_month">
