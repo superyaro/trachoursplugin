@@ -26,9 +26,9 @@ from trac.util.html import html as tag
 from trac.util.translation import _
 from trac.web.api import IRequestHandler, ITemplateStreamFilter
 from trac.web.chrome import (
-    INavigationContributor, ITemplateProvider, add_ctxtnav,
-    add_link, add_script, add_stylesheet, add_warning, prevnext_nav,
-    web_context
+    Chrome, INavigationContributor, ITemplateProvider, add_ctxtnav,
+    add_link, add_script, add_script_data, add_stylesheet, add_warning,
+    prevnext_nav, web_context
 )
 
 from componentdependencies.interface import IRequireComponents
@@ -839,7 +839,16 @@ class TracHoursPlugin(Component):
                                    to_year=to_date.year))
         add_ctxtnav(req, 'Saved Queries', req.href.hours('query/list'))
 
+        properties = dict((name, dict((key, field[key])
+                                      for key in ('type', 'label', 'options',
+                                                  'optgroups', 'optional',
+                                                  'format')
+                                      if key in field))
+                          for name, field in data['fields'].iteritems())
+        add_script_data(req, properties=properties, modes=data['modes'])
+
         add_stylesheet(req, 'common/css/report.css')
+        Chrome(self.env).add_jquery_ui(req)
         add_script(req, 'common/js/query.js')
 
         return 'hours_timeline.html', data, 'text/html'
