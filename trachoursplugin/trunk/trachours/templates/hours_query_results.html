@@ -19,7 +19,7 @@
 
   <h3>${double_count_warning}</h3>
   <py:for each="group_index, (groupname, results) in enumerate(groups)">
-    <h2 class="report-result" py:if="groupname">
+    <h2 class="report-result" py:if="groupname is not None">
       ${labels[query.group]}:
       ${query.group in ['owner', 'reporter'] and authorinfo(groupname) or groupname}
     </h2>

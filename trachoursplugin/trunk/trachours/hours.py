@@ -716,8 +716,9 @@ class TracHoursPlugin(Component):
             # sort ticket_times, if needed
             if order in our_labels:
                 ticket_times.sort(key=lambda x: x[order], reverse=desc)
-            data['groups'].append((key, ticket_times))
-            num_items += len(ticket_times)
+            if ticket_times:
+                data['groups'].append((key, ticket_times))
+                num_items += len(ticket_times)
 
         data['double_count_warning'] = ''
 
