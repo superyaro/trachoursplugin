@@ -26,7 +26,12 @@
             </thead>
             <tbody>
               <tr py:for="record in time_records">
-              <td>${record['worker']}<!-- should link to hours for this worker, either a view or a report/query --></td>
+              <!--td>${record['worker']}</td-->
+              <td>
+                <a href="${req.href('hours', 'user', record['worker'])}">
+                ${record['worker']}
+                </a>
+              </td>
               <py:choose test="can_add_others_hours or can_add_hours and req.authname == record['worker']">
                 <td py:when="True"><nobr>
                   <input type="text" name="hours_${record['id']}" size="3" style="text-align:right"
