@@ -14,6 +14,8 @@ import time
 from StringIO import StringIO
 from pkg_resources import parse_version
 
+import logging
+
 from genshi.filters import Transformer
 from genshi.filters.transform import StreamBuffer
 from trac import __version__ as TRAC_VERSION
@@ -104,24 +106,29 @@ class TracHoursRoadmapFilter(Component):
             b = StreamBuffer()
             stream |= Transformer(find_xpath).copy(b).end().select(xpath). \
                 append(
-                self.MilestoneMarkup(b, hours, req.href, this_milestone))
+                self.MilestoneMarkup(b, hours, req.href, this_milestone, self.log))
 
         return stream
 
     class MilestoneMarkup(object):
         """Iterator for Transformer markup injection"""
 
-        def __init__(self, buffer, hours, href, this_milestone):
+        def __init__(self, buffer, hours, href, this_milestone, log):
             self.buffer = buffer
             self.hours = hours
             self.href = href
             self.this_milestone = this_milestone
+            self.log = log
 
         def __iter__(self):
             if self.this_milestone is not None:  # for /milestone/xxx
                 milestone = self.this_milestone
             else:
-                milestone = self.buffer.events[3][1]
+                if self.buffer.events.__len__() >= 4 and self.buffer.events[3].__len__() >= 1:
+                    milestone = self.buffer.events[3][1]
+                else:
+                    self.log.debug('see https://trac-hacks.org/ticket/13565')
+                    milestone = ''
             if milestone not in self.hours.keys():
                 return iter([])
             hours = self.hours[milestone]
