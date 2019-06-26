@@ -14,7 +14,6 @@ import time
 from StringIO import StringIO
 from pkg_resources import parse_version
 
-import logging
 
 from genshi.filters import Transformer
 from genshi.filters.transform import StreamBuffer
@@ -124,10 +123,10 @@ class TracHoursRoadmapFilter(Component):
             if self.this_milestone is not None:  # for /milestone/xxx
                 milestone = self.this_milestone
             else:
-                if self.buffer.events.__len__() >= 4 and self.buffer.events[3].__len__() >= 1:
+                if len(self.buffer.events) >= 4 and len(self.buffer.events[3]) >= 1:
                     milestone = self.buffer.events[3][1]
                 else:
-                    self.log.debug('see https://trac-hacks.org/ticket/13565')
+                    self.log.debug('see https://trac-hacks.org/ticket/13565 & 13161')
                     milestone = ''
             if milestone not in self.hours.keys():
                 return iter([])
